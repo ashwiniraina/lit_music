@@ -14,15 +14,17 @@ class DatasetReader:
 
 	def read(self, dataset_name):
 		if dataset_name == self.constants.DATASET_LASTFM_1K:
-			self.read_lastfm_1k_dataset()
+			return self.read_lastfm_1k_dataset()
 		elif dataset_name == self.constants.DATASET_30MUSIC:
 			self.read_30music_dataset()
 		elif dataset_name == self.constants.MAPS_LASTFM_1K:
-			self.read_lastfm_1k_map_files()
+			return self.read_lastfm_1k_map_files()
 		elif dataset_name == self.constants.MAPSS_30MUSIC:
 			self.read_30music_map_files()
 		else:
 			print ("error: unknown dataset name")
+
+
 
 	def print_user_db(self, user_db):
 		print ("USER_DB:")
@@ -93,10 +95,10 @@ class DatasetReader:
 
 	def write_map_objects_to_files(self, user_db, song_db):
 		with open('../datasets/lastfm-dataset-1K/user_db.map', 'wb') as user_db_file:
-			pickle.dump(user_db, user_db_file, pickle.HIGHEST_PROTOCOL)
+			pickle.dump(user_db, user_db_file)
 		print ("user_db.map writing complete")
 		with open('../datasets/lastfm-dataset-1K/song_db.map', 'wb') as song_db_file:
-			pickle.dump(song_db, song_db_file, pickle.HIGHEST_PROTOCOL)	
+			pickle.dump(song_db, song_db_file)	
 		print ("song_db.map writing complete")
 
 	def read_lastfm_1k_dataset(self):
@@ -201,9 +203,9 @@ class DatasetReader:
 		print ("After post processing num valid users=",len(user_db),"Num valid songs=",len(song_db), "num infrequent users=",len(infrequent_user_map)," num_zero_session_users=",num_zero_session_users)
 
 		# write the user_db and song_db to files
-		#self.write_map_objects_to_files(user_db, song_db)
+		self.write_map_objects_to_files(user_db, song_db)
 
-		return user_db, song_db
+		return (user_db, song_db)
 
 	def find_infrequent_users_and_songs(self):
 
@@ -266,20 +268,20 @@ class DatasetReader:
 			if song_object.get_num_unique_users() < self.constants.MIN_USERS_COUNT:
 				infrequent_song_map[song_name] = 1
 
-		print ("Infrequent song map len=",len(infrequent_song_map))		
+		print ("Infrequent song map len=",len(infrequent_song_map))
 		
 		return user_db, infrequent_user_map, infrequent_song_map
 
 	def read_lastfm_1k_map_files(self):
 		user_db = {}
 		with open('../datasets/lastfm-dataset-1K/user_db.map', 'rb') as user_db_file:
-			user_db = pickle.load(user_db, user_db_file, pickle.HIGHEST_PROTOCOL)
+			user_db = pickle.load(user_db_file)
 
 		song_db = {}
 		with open('../datasets/lastfm-dataset-1K/song_db.map', 'rb') as song_db_file:
-			song_db = pickle.dump(song_db, song_db_file, pickle.HIGHEST_PROTOCOL)
+			song_db = pickle.load(song_db_file)
 
-		return user_db
+		return (user_db, song_db)
 
 	def read_30music_dataset(self):
 		print ("Nothing to do")
