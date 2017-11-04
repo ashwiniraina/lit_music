@@ -24,8 +24,6 @@ class DatasetReader:
 		else:
 			print ("error: unknown dataset name")
 
-
-
 	def print_user_db(self, user_db):
 		print ("USER_DB:")
 		for user_id in user_db:
@@ -36,62 +34,12 @@ class DatasetReader:
 		index = 0
 		total_songs_in_db = 0
 		total_songs_played = 0
-		for song_name in song_db:
-			print ("Index: ",index,"song name:"+song_name, "num times played=",song_db[song_name].num_times_song_played, "num_unique_users_played=",song_db[song_name].get_num_unique_users())
+		for song_id in song_db:
+			print ("Index: ",index,"song id:"+song_id, "num times played=",song_db[song_id].num_times_song_played, "num_unique_users_played=",song_db[song_id].get_num_unique_users())
 			total_songs_in_db += 1
-			total_songs_played += song_db[song_name].num_times_song_played
+			total_songs_played += song_db[song_id].num_times_song_played
 			index += 1
 		print ("Total songs in db=",total_songs_in_db, "total songs played=",total_songs_played)		
-
-	# def filter_out_infrequent_users_and_songs(self, user_db, song_db):
-
-	# 	infrequent_user_list = []
-	# 	infrequent_song_list = []
-	# 	num_infrequent_users = 0
-	# 	# loop through the user_db to find the infrequent users and delete them from song_db
-	# 	for user_id in user_db:
-	# 		user_object = user_db[user_id]
-	# 		if user_object.get_num_unique_songs() < self.constants.MIN_SONGS_COUNT:
-	# 			print ("user_id=",user_id," num unique songs played=",user_object.get_num_unique_songs())
-	# 			for song_name in song_db:
-	# 				song_object = song_db[song_name]
-	# 				if user_object in song_object.users:
-	# 					song_object.get_num_unique_users() -= 1
-	# 					song_object.num_times_song_played -= user_object.songs[song_object]
-	# 					del song_object.users[user_object]
-	# 					abd
-	# 			num_infrequent_users += 1
-	# 			infrequent_user_list.append(user_object)
-
-	# 	print ("Total infrequent users=",num_infrequent_users)
-		
-	# 	num_infrequent_songs = 0
-	# 	# loop through the song_db to find the infrequent songs and delete them from user_db
-	# 	for song_name in song_db:
-	# 		song_object = song_db[song_name]
-	# 		if song_object.get_num_unique_users() < self.constants.MIN_USERS_COUNT:
-	# 			for user_id in user_db:
-	# 				user_object= user_db[user_id]
-	# 				if song_object in user_object.songs:
-	# 					user_object.get_num_unique_songs() -= 1
-	# 					user_object.num_songs_played -= song_object.users[user_object]
-	# 					del user_object.songs[song_object]
-	# 					for outerlist in user_object.play_sessions:
-	# 						for item in outerlist:
-	# 							if item[1] == song_object:
-	# 								abd
-
-	# 			num_infrequent_songs += 1
-	# 			infrequent_song_list.append(song_object)
-
-	# 	print ("Total infrequent songs=",num_infrequent_songs)
-
-	# 	for user_object in infrequent_user_list:
-	# 		del user_db[user_object]
-	# 	for song_object in infrequent_song_list:
-	# 		del song_db[song_object]
-
-	# 	return user_db, song_db
 
 	def write_map_objects_to_files(self, user_db, song_db):
 		with open('../datasets/lastfm-dataset-1K/user_db.map', 'wb') as user_db_file:
@@ -105,10 +53,6 @@ class DatasetReader:
 
 		user_db, infrequent_user_map, infrequent_song_map = self.find_infrequent_users_and_songs()
 
-		# filter infrequent users from the user database		
-		for user_id in infrequent_user_map:
-			del user_db[user_id]
-
 		#self.print_user_db(user_db)
 		
 		loop = 0
@@ -116,7 +60,7 @@ class DatasetReader:
 		num_play_sessions = 0
 		num_zero_session_users = 0
 		# populate the song database
-		song_db = {} # maps song_name to song object
+		song_db = {} # maps song_id to song object
 		with open('../datasets/lastfm-dataset-1K/userid-timestamp-artid-artname-traid-traname.tsv', 'r') as song_history_file:
 			play_session = []
 			prev_user_id = ""
@@ -126,23 +70,21 @@ class DatasetReader:
 				song_info = song_event.strip("\n").split("\t")
 				user_id = song_info[0]
 				timestamp = dt.datetime.strptime(song_info[1], "%Y-%m-%dT%H:%M:%SZ")
-				song_name = song_info[-1]
+				song_id = song_info[-2]
 
 				# skip infrequent users and songs
-				if user_id in infrequent_user_map or song_name in infrequent_song_map:
-					# prev_user_id = user_id
-					# prev_timestamp = timestamp
+				if user_id in infrequent_user_map or song_id in infrequent_song_map:
 					continue
 				
-				#print ("Index: ",loop," user_id: ",user_id," timestamp=",timestamp," song name: ",song_name)
-				# some entries dont have song_id or artist_id. song_name is the unique key. 
-				# song_name is the last element of song_info
-				if song_name not in song_db:
+				#print ("Index: ",loop," user_id: ",user_id," timestamp=",timestamp," song id: ",song_id)
+				# some entries dont have song_id or artist_id. song_id is the unique key. 
+				# song_id is the second last element of song_info
+				if song_id not in song_db:
 					# index 2 is artist_id, 3 is artist_name, 4 is song_id, 5 is song_name
 					song_object = Song(song_info[2], song_info[3], song_info[4], song_info[5])
-					song_db[song_name] = song_object
+					song_db[song_id] = song_object
 				else:
-					song_object = song_db[song_name]
+					song_object = song_db[song_id]
 
 				user_object = user_db[user_id]
 				song_object.set_song_stats(user_object)
@@ -157,15 +99,16 @@ class DatasetReader:
 							user_object.play_sessions.append_session(play_session)
 							num_play_sessions += 1
 							#print ("Added session user_id=",user_id," session len=",len(play_session)," num play sessions=",num_play_sessions)
-						# 	if len(play_session) > 150:
-						# 		print ("Long listening session len=",len(play_session), [x[1].song_name for x in play_session])
+							# if len(play_session) > 150:
+							# 	print ("Long listening session len=",len(play_session), [(x[0],x[1].song_id) for x in play_session])
 						# else:
-						# 	print ("Short listening session len=",len(play_session), [x[1].song_name for x in play_session])
+						# 	print ("Short listening session len=",len(play_session), [x[1].song_id for x in play_session])
 						play_session = []
 						num_interrrupted_sessions += 1
 						#print ("Found interrupted session, user_id=",user_id," seconds elapsed=",seconds_elapsed," num songs in session=",len(play_session)," total interrupted sessions=",num_interrrupted_sessions)
 				else:
 					if prev_user_id != "":
+						print ("Processing user_id: ",user_id)
 						# previous user song history has been completely processed, switching to new user.
 						# mark the end of play session for previous user
 						if len(play_session) >= self.constants.MIN_PLAY_SESSION_SONG_COUNT:
@@ -180,6 +123,8 @@ class DatasetReader:
 							num_zero_session_users += 1
 							#print (prev_user_id," has 0 sessions, total zero sessions=",num_zero_session_users)
 							del user_db[prev_user_id]
+					else:
+						print ("Processing user_id: ",user_id)
 				
 				play_session.append((timestamp, song_object))
 				prev_user_id = user_id
@@ -202,8 +147,16 @@ class DatasetReader:
 
 		print ("After post processing num valid users=",len(user_db),"Num valid songs=",len(song_db), "num infrequent users=",len(infrequent_user_map)," num_zero_session_users=",num_zero_session_users)
 
+		total_play_sessions = 0
+		total_play_session_songs = 0
+		for user_id in user_db:
+			for play_session in user_db[user_id].play_sessions.sessions:
+				total_play_session_songs += len(play_session)
+				total_play_sessions += 1
+		print ("Total play sessions=",total_play_sessions," Total play session songs=",total_play_session_songs," Avg len of play sessions=",float(total_play_session_songs)/total_play_sessions)
+
 		# write the user_db and song_db to files
-		self.write_map_objects_to_files(user_db, song_db)
+		#self.write_map_objects_to_files(user_db, song_db)
 
 		return (user_db, song_db)
 
@@ -226,50 +179,71 @@ class DatasetReader:
 		
 		loop = 0
 		# populate the song database
-		song_db = {} # maps song_name to song object
+		song_db = {} # maps song_id to song object
 		with open('../datasets/lastfm-dataset-1K/userid-timestamp-artid-artname-traid-traname.tsv', 'r') as song_history_file:
 			for song_event in song_history_file:
 				song_info = song_event.strip("\n").split("\t")
 				user_id = song_info[0]
-				song_name = song_info[-1]
-				#print ("Index: ",loop," user_id: ",user_id," timestamp=",timestamp," song name: ",song_name)
-				# some entries dont have song_id or artist_id. song_name is the unique key. 
-				# song_name is the last element of song_info
-				if song_name not in song_db:
+				song_id = song_info[-2]
+				#print ("Index: ",loop," user_id: ",user_id," timestamp=",timestamp," song id ",song_id)
+				if song_id not in song_db:
 					# index 2 is artist_id, 3 is artist_name, 4 is song_id, 5 is song_name
 					song_object = Song(song_info[2], song_info[3], song_info[4], song_info[5])
-					song_db[song_name] = song_object
+					song_db[song_id] = song_object
 				else:
-					song_object = song_db[song_name]
+					song_object = song_db[song_id]
 				user_object = user_db[user_id]
 				song_object.set_song_stats(user_object)
 				user_object.set_user_stats(song_object)
 
 				if loop%100000 == 0:
-					print ("Index: ",loop," user_id: ",user_id,"song name: ",song_name," song_id: ",song_info[4])
+					print ("Index: ",loop," user_id: ",user_id,"song name: ",song_info[-1]," song_id: ",song_id)
 				loop += 1
 
-		print ("Before post processing num valid users=",len(user_db),"Num valid songs=",len(song_db))
+		print ("Before post processing num valid users=",len(user_db)," Num valid songs=",len(song_db))
 
-		# find infrequent users
+		print (song_db[""].song_name, song_db[""].artist_name)
+
 		infrequent_user_map = {}
-		for user_id in user_db:
-			user_object = user_db[user_id]
-			if user_object.get_num_unique_songs() < self.constants.MIN_SONGS_COUNT:
-				infrequent_user_map[user_id] = 1
-				print ("Infrequent user_id=",user_id)
-
-		print ("Infrequent user list len=",len(infrequent_user_map))
-
-		# find infrequent songs
 		infrequent_song_map = {}
-		for song_name in song_db:
-			song_object = song_db[song_name]
-			if song_object.get_num_unique_users() < self.constants.MIN_USERS_COUNT:
-				infrequent_song_map[song_name] = 1
+		while True:
 
-		print ("Infrequent song map len=",len(infrequent_song_map))
+			# find infrequent users
+			infrequent_user_map_temp = {}
+			for user_id in user_db:
+				user_object = user_db[user_id]
+				if user_object.get_num_unique_songs() < self.constants.MIN_SONGS_COUNT:
+					infrequent_user_map[user_id] = 1
+					infrequent_user_map_temp[user_id] = 1
+					print ("Infrequent user_id=",user_id)
+					for song_object in user_object.songs:
+						count = song_object.users[user_object]
+						song_object.num_times_song_played -= count
+						del song_object.users[user_object]
+			for user_id in infrequent_user_map_temp:
+				del user_db[user_id]
+			print ("Infrequent user list len=",len(infrequent_user_map))
+
+			# find infrequent songs
+			infrequent_song_map_temp = {}
+			for song_id in song_db:
+				song_object = song_db[song_id]
+				if song_object.get_num_unique_users() < self.constants.MIN_USERS_COUNT:
+					infrequent_song_map[song_id] = 1
+					infrequent_song_map_temp[song_id] = 1
+					for user_object in song_db[song_id].users:
+						count = user_object.songs[song_object]
+						user_object.num_songs_played -= count
+						del user_object.songs[song_object]
+			for song_id in infrequent_song_map_temp:
+				del song_db[song_id]
+			print ("Infrequent song map len=",len(infrequent_song_map))
+
+			if len(infrequent_user_map_temp)==0 and len(infrequent_song_map_temp)==0:
+				break
 		
+		# append the song with missing mb_id
+		infrequent_song_map[""] = 1
 		return user_db, infrequent_user_map, infrequent_song_map
 
 	def read_lastfm_1k_map_files(self):

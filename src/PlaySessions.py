@@ -11,7 +11,7 @@ class PlaySessions:
 		self.user = user
 		self.sessions = []
 
-	# input argument session is a list of tuples i.e. [(timestamp1, song1), (timestamp2, song2)...]
+	# input argument session is a list of tuples i.e. [(timestamp1, song_int_id), (timestamp2, song_int_id)...]
 	def append_session(self, session):
 		self.sessions.append(session)
 
