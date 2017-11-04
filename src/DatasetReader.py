@@ -44,16 +44,16 @@ class DatasetReader:
 		print ("Total songs in db=",total_songs_in_db, "total songs played=",total_songs_played)
 
 	def write_map_objects_to_files(self, user_db, song_db):
-		with open('../datasets/lastfm-dataset-1K/post_processed_files/user_db.map', 'wb') as user_db_file:
+		with open('../datasets/lastfm-dataset-1K/extracts/user_db.map', 'wb') as user_db_file:
 			pickle.dump(user_db, user_db_file)
 		print ("user_db.map writing complete")
-		with open('../datasets/lastfm-dataset-1K/post_processed_files/song_db.map', 'wb') as song_db_file:
+		with open('../datasets/lastfm-dataset-1K/extracts/song_db.map', 'wb') as song_db_file:
 			pickle.dump(song_db, song_db_file)	
 		print ("song_db.map writing complete")
 
 	def write_play_sessions_to_file(self, user_db):
 		for user_id in user_db:
-			with open('../datasets/lastfm-dataset-1K/post_processed_files/play_session_'+user_id, 'w') as play_session_user_file:
+			with open('../datasets/lastfm-dataset-1K/extracts/play_session_'+user_id, 'w') as play_session_user_file:
 				for session in user_db[user_id].play_sessions.sessions:
 					session_str = ""
 					first_event = True
@@ -62,8 +62,8 @@ class DatasetReader:
 							session_str += ","
 						else:
 							first_event = False
-						session_str += str(event[0])+","+str(event[1].get_song_int_id())
-				play_session_user_file.write(session_str+"\n")
+						session_str += str(event[0])+","+str(event[1].get_song_id_int())
+					play_session_user_file.write(session_str+"\n")
 		print ("user_db play sessions writing complete")
 
 	def read_lastfm_1k_dataset(self):
@@ -112,7 +112,7 @@ class DatasetReader:
 						if len(play_session) >= self.constants.MIN_PLAY_SESSION_SONG_COUNT:
 							user_object.play_sessions.append_session(play_session)
 							num_play_sessions += 1
-							#print ("Added session user_id=",user_id," session len=",len(play_session)," num play sessions=",num_play_sessions," sessions=",[(x[0],x[1].song_int_id) for x in play_session])
+							#print ("Added session user_id=",user_id," session len=",len(play_session)," num play sessions=",num_play_sessions," sessions=",[(x[0],x[1].song_id_int) for x in play_session])
 							# if len(play_session) > 150:
 							# 	print ("Long listening session len=",len(play_session), [(x[0],x[1].song_id) for x in play_session])
 						# else:
@@ -268,11 +268,11 @@ class DatasetReader:
 
 	def read_lastfm_1k_map_files(self):
 		user_db = {}
-		with open('../datasets/lastfm-dataset-1K/post_processed_files/user_db.map', 'rb') as user_db_file:
+		with open('../datasets/lastfm-dataset-1K/extracts/user_db.map', 'rb') as user_db_file:
 			user_db = pickle.load(user_db_file)
 
 		song_db = {}
-		with open('../datasets/lastfm-dataset-1K/post_processed_files/song_db.map', 'rb') as song_db_file:
+		with open('../datasets/lastfm-dataset-1K/extracts/song_db.map', 'rb') as song_db_file:
 			song_db = pickle.load(song_db_file)
 
 		return (user_db, song_db)
@@ -295,4 +295,4 @@ class DatasetReader:
 				song_id = int(''.join(song_obj.song_id.split('-')), base=16)
 				ratings_mat[user_id, song_id] = count/user_obj.num_songs_played # normalized count
 
-		save_npz('../datasets/lastfm-dataset-1K/rating_mat.npz', ratings_mat)
+		save_npz('../datasets/lastfm-dataset-1K/extracts/rating_mat.npz', ratings_mat)

@@ -3,7 +3,7 @@ class Song:
 	# song_name is used as the unique key as dataset does not have song_id for all songs.
 	# song_name = "uninitialized"
 	# song_id = "uninitialized"
-	# song_int_id = -1
+	# song_id_int = -1
 	# artist_id = "uninitialized"
 	# artist_name = "uninitialized"
 
@@ -12,7 +12,7 @@ class Song:
 	# users = None
 	# num_times_song_played = 0
 
-	# song_id to song_int_id map
+	# song_id to song_id_int map
 	song_id_to_int_id_map = {}
 	
 	def __init__(self, artist_id, artist_name, song_id, song_name):
@@ -25,7 +25,7 @@ class Song:
 		temp_id = len(Song.song_id_to_int_id_map)
 		if song_id not in Song.song_id_to_int_id_map:
 			Song.song_id_to_int_id_map[song_id] = temp_id
-		self.song_int_id = temp_id
+		self.song_id_int = temp_id
 
 	def set_song_stats(self, user):
 		user_id = user.user_id
@@ -37,8 +37,8 @@ class Song:
 
 		self.num_times_song_played += 1
 
-	def get_song_int_id(self):
-		return self.song_int_id
+	def get_song_id_int(self):
+		return self.song_id_int
 
 	def get_num_unique_users(self):
 		return (len(self.users))
