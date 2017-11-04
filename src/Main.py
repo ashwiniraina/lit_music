@@ -9,5 +9,6 @@ dataset_reader = DatasetReader()
 print ("User db len=",len(user_db), " Song db len=", len(song_db))
 
 # load the pre-processed map files
-(user_db, song_db) = dataset_reader.read(constants.MAPS_LASTFM_1K);
-print ("User db len=",len(user_db), " Song db len=",len(song_db))
+# (user_db, song_db) = dataset_reader.read(constants.MAPS_LASTFM_1K);
+# print ("User db len=",len(user_db), " Song db len=",len(song_db))
+
