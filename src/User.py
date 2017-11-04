@@ -1,7 +1,7 @@
 from PlaySessions import PlaySessions
 
 class User:
-	
+
 	user_id = "uninitialized"
 	gender = "uninitialized"
 	age = -1
@@ -12,7 +12,7 @@ class User:
 	# user statistics
 	# songs played by this user
 	songs = None
-	num_songs_played = 0
+	num_songs_played = 0 # total counts
 
 	def __init__(self, user_id, gender, age, country, reg_date):
 		self.user_id = user_id
@@ -29,7 +29,7 @@ class User:
 			self.songs[song] = count+1
 		else:
 			self.songs[song] = 1
-			
+
 		self.num_songs_played += 1
 
 	def get_num_unique_songs(self):
@@ -45,5 +45,3 @@ class User:
 			song_list += str(index)+":"+song.song_name+" "
 			index += 1
 		print(song_list)
-
-

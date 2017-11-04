@@ -5,6 +5,8 @@ import json
 import datetime as dt
 import pickle
 import sys
+import numpy as np
+from scipy.sparse import csc_matrix
 
 class DatasetReader:
 	constants = Constants()
@@ -39,14 +41,14 @@ class DatasetReader:
 			total_songs_in_db += 1
 			total_songs_played += song_db[song_id].num_times_song_played
 			index += 1
-		print ("Total songs in db=",total_songs_in_db, "total songs played=",total_songs_played)		
+		print ("Total songs in db=",total_songs_in_db, "total songs played=",total_songs_played)
 
 	def write_map_objects_to_files(self, user_db, song_db):
 		with open('../datasets/lastfm-dataset-1K/user_db.map', 'wb') as user_db_file:
 			pickle.dump(user_db, user_db_file)
 		print ("user_db.map writing complete")
 		with open('../datasets/lastfm-dataset-1K/song_db.map', 'wb') as song_db_file:
-			pickle.dump(song_db, song_db_file)	
+			pickle.dump(song_db, song_db_file)
 		print ("song_db.map writing complete")
 
 	def read_lastfm_1k_dataset(self):
@@ -54,7 +56,7 @@ class DatasetReader:
 		user_db, infrequent_user_map, infrequent_song_map = self.find_infrequent_users_and_songs()
 
 		#self.print_user_db(user_db)
-		
+
 		loop = 0
 		num_interrrupted_sessions = 0
 		num_play_sessions = 0
@@ -75,9 +77,9 @@ class DatasetReader:
 				# skip infrequent users and songs
 				if user_id in infrequent_user_map or song_id in infrequent_song_map:
 					continue
-				
+
 				#print ("Index: ",loop," user_id: ",user_id," timestamp=",timestamp," song id: ",song_id)
-				# some entries dont have song_id or artist_id. song_id is the unique key. 
+				# some entries dont have song_id or artist_id. song_id is the unique key.
 				# song_id is the second last element of song_info
 				if song_id not in song_db:
 					# index 2 is artist_id, 3 is artist_name, 4 is song_id, 5 is song_name
@@ -89,7 +91,7 @@ class DatasetReader:
 				user_object = user_db[user_id]
 				song_object.set_song_stats(user_object)
 				user_object.set_user_stats(song_object)
-				
+
 				# check if current event user_id is same as prev_user_id
 				if (user_id == prev_user_id):
 					seconds_elapsed = (prev_timestamp-timestamp).total_seconds()
@@ -125,7 +127,7 @@ class DatasetReader:
 							del user_db[prev_user_id]
 					else:
 						print ("Processing user_id: ",user_id)
-				
+
 				play_session.append((timestamp, song_object))
 				prev_user_id = user_id
 				prev_timestamp = timestamp
@@ -176,7 +178,7 @@ class DatasetReader:
 				user_db[user_info[0]] = user_object
 
 		#self.print_user_db(user_db)
-		
+
 		loop = 0
 		# populate the song database
 		song_db = {} # maps song_id to song object
@@ -241,7 +243,7 @@ class DatasetReader:
 
 			if len(infrequent_user_map_temp)==0 and len(infrequent_song_map_temp)==0:
 				break
-		
+
 		# append the song with missing mb_id
 		infrequent_song_map[""] = 1
 		return user_db, infrequent_user_map, infrequent_song_map
@@ -264,3 +266,15 @@ class DatasetReader:
 	def read_30music_map_files(self):
 		print ("Nothing to do")
 
+	def get_ratings_matrix(self, user_db, song_db):
+		num_users = len(user_db.keys())
+		num_songs = len(song_db.keys())
+		ratings_mat = csc_matrix((num_users, num_songs), dtype=np.int16) # a matrix of normalized counts
+
+		for user_id, user_obj in user_db.items():
+			user_id_int = int(user_id[5:])
+			for song_obj,count in user_obj.songs.items():
+				song_id = int(''.join(song_obj.song_id.split('-')), base=16)
+				ratings_mat[user_id, song_id] = count/user_obj.num_songs_played # normalized count
+
+		save_npz('../datasets/lastfm-dataset-1K/rating_mat.npz', ratings_mat)
