@@ -12,3 +12,6 @@ print ("User db len=",len(user_db), " Song db len=", len(song_db))
 # (user_db, song_db) = dataset_reader.read(constants.MAPS_LASTFM_1K);
 # print ("User db len=",len(user_db), " Song db len=",len(song_db))
 
+# write the play sessions files
+# dataset_reader.write_play_sessions_to_file(user_db)
+

@@ -2,17 +2,17 @@ from PlaySessions import PlaySessions
 
 class User:
 	
-	user_id = "uninitialized"
-	gender = "uninitialized"
-	age = -1
-	country = "uninitialized"
-	reg_date = "uninitialized"
-	play_sessions = None
+	# user_id = "uninitialized"
+	# gender = "uninitialized"
+	# age = -1
+	# country = "uninitialized"
+	# reg_date = "uninitialized"
+	# play_sessions = None
 
-	# user statistics
-	# songs played by this user
-	songs = None
-	num_songs_played = 0
+	# # user statistics
+	# # songs played by this user
+	# songs = None
+	# num_songs_played = 0
 
 	def __init__(self, user_id, gender, age, country, reg_date):
 		self.user_id = user_id
@@ -22,13 +22,15 @@ class User:
 		self.reg_date = reg_date
 		self.play_sessions = PlaySessions(self)
 		self.songs = {}
+		self.num_songs_played = 0
 
 	def set_user_stats(self, song):
-		if song in self.songs:
-			count = self.songs[song]
-			self.songs[song] = count+1
+		song_id = song.song_id
+		if song_id in self.songs:
+			count = self.songs[song_id]
+			self.songs[song_id] = count+1
 		else:
-			self.songs[song] = 1
+			self.songs[song_id] = 1
 			
 		self.num_songs_played += 1
 
@@ -41,8 +43,8 @@ class User:
 		print ("songs=")
 		index = 0
 		song_list = ""
-		for song in self.songs:
-			song_list += str(index)+":"+song.song_name+" "
+		for song_id in self.songs:
+			song_list += str(index)+":"+song_id+" "
 			index += 1
 		print(song_list)
 

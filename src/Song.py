@@ -1,16 +1,16 @@
 
 class Song:
 	# song_name is used as the unique key as dataset does not have song_id for all songs.
-	song_name = "uninitialized"
-	song_id = "uninitialized"
-	song_int_id = -1
-	artist_id = "uninitialized"
-	artist_name = "uninitialized"
+	# song_name = "uninitialized"
+	# song_id = "uninitialized"
+	# song_int_id = -1
+	# artist_id = "uninitialized"
+	# artist_name = "uninitialized"
 
-	# song statistics
-	# all users that played this song
-	users = None
-	num_times_song_played = 0
+	# # song statistics
+	# # all users that played this song
+	# users = None
+	# num_times_song_played = 0
 
 	# song_id to song_int_id map
 	song_id_to_int_id_map = {}
@@ -20,18 +20,20 @@ class Song:
 		self.artist_name = artist_name
 		self.song_id = song_id
 		self.song_name = song_name
-		self.users = {}
-		temp_id = len(self.song_id_to_int_id_map)
-		if song_id not in self.song_id_to_int_id_map:
-			self.song_id_to_int_id_map[song_id] = temp_id
+		self.users = {} # map of user_id to play count
+		self.num_times_song_played = 0
+		temp_id = len(Song.song_id_to_int_id_map)
+		if song_id not in Song.song_id_to_int_id_map:
+			Song.song_id_to_int_id_map[song_id] = temp_id
 		self.song_int_id = temp_id
 
 	def set_song_stats(self, user):
-		if user in self.users:
-			count = self.users[user]
-			self.users[user] = count+1
+		user_id = user.user_id
+		if user_id in self.users:
+			count = self.users[user_id]
+			self.users[user_id] = count+1
 		else:
-			self.users[user] = 1
+			self.users[user_id] = 1
 
 		self.num_times_song_played += 1
 
@@ -41,13 +43,17 @@ class Song:
 	def get_num_unique_users(self):
 		return (len(self.users))
 
+	@staticmethod
+	def clear_song_id_to_int_id_map():
+		Song.song_id_to_int_id_map = {}
+
 	def print_class_state(self):
 		print ("song_name=",self.song_name,"song_id=",self.song_id,"artist_id=",self.artist_id,"artist_name=",self.artist_name)
 		print ("num_times_song_played=",self.num_times_song_played,"num_unique_users_played=",len(self.users))
 		print ("users=")
 		index = 0
 		user_list= ""
-		for user in self.users:
+		for user_id in self.users:
 			user_list += str(index)+":"+user_id+" "
 			index += 1
 

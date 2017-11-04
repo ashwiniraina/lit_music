@@ -3,9 +3,8 @@ import numpy as np
 
 class PlaySessions:
 	constants = Constants()
-	user = "uninitialized"
-	#song_transition_matrix = np.zeros((constants.MAX_SONGS_LASTFM_1K, constants.MAX_SONGS_LASTFM_1K))
-	sessions = None # list of lists
+	# user = "uninitialized"
+	# sessions = None # list of lists
 
 	def __init__(self, user):
 		self.user = user

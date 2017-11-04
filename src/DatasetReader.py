@@ -42,18 +42,31 @@ class DatasetReader:
 		print ("Total songs in db=",total_songs_in_db, "total songs played=",total_songs_played)		
 
 	def write_map_objects_to_files(self, user_db, song_db):
-		with open('../datasets/lastfm-dataset-1K/user_db.map', 'wb') as user_db_file:
+		with open('../datasets/lastfm-dataset-1K/post_processed_files/user_db.map', 'wb') as user_db_file:
 			pickle.dump(user_db, user_db_file)
 		print ("user_db.map writing complete")
-		with open('../datasets/lastfm-dataset-1K/song_db.map', 'wb') as song_db_file:
+		with open('../datasets/lastfm-dataset-1K/post_processed_files/song_db.map', 'wb') as song_db_file:
 			pickle.dump(song_db, song_db_file)	
 		print ("song_db.map writing complete")
+
+	def write_play_sessions_to_file(self, user_db):
+		for user_id in user_db:
+			with open('../datasets/lastfm-dataset-1K/post_processed_files/play_session_'+user_id, 'w') as play_session_user_file:
+				for session in user_db[user_id].play_sessions.sessions:
+					session_str = ""
+					first_event = True
+					for event in session:
+						if first_event == False:
+							session_str += ","
+						else:
+							first_event = False
+						session_str += str(event[0])+","+str(event[1].get_song_int_id())
+				play_session_user_file.write(session_str+"\n")
+		print ("user_db play sessions writing complete")
 
 	def read_lastfm_1k_dataset(self):
 
 		user_db, infrequent_user_map, infrequent_song_map = self.find_infrequent_users_and_songs()
-
-		#self.print_user_db(user_db)
 		
 		loop = 0
 		num_interrrupted_sessions = 0
@@ -98,7 +111,7 @@ class DatasetReader:
 						if len(play_session) >= self.constants.MIN_PLAY_SESSION_SONG_COUNT:
 							user_object.play_sessions.append_session(play_session)
 							num_play_sessions += 1
-							#print ("Added session user_id=",user_id," session len=",len(play_session)," num play sessions=",num_play_sessions)
+							#print ("Added session user_id=",user_id," session len=",len(play_session)," num play sessions=",num_play_sessions," sessions=",[(x[0],x[1].song_int_id) for x in play_session])
 							# if len(play_session) > 150:
 							# 	print ("Long listening session len=",len(play_session), [(x[0],x[1].song_id) for x in play_session])
 						# else:
@@ -156,7 +169,10 @@ class DatasetReader:
 		print ("Total play sessions=",total_play_sessions," Total play session songs=",total_play_session_songs," Avg len of play sessions=",float(total_play_session_songs)/total_play_sessions)
 
 		# write the user_db and song_db to files
-		#self.write_map_objects_to_files(user_db, song_db)
+		self.write_map_objects_to_files(user_db, song_db)
+
+		# write the play sessions files
+		self.write_play_sessions_to_file(user_db)
 
 		return (user_db, song_db)
 
@@ -216,10 +232,11 @@ class DatasetReader:
 					infrequent_user_map[user_id] = 1
 					infrequent_user_map_temp[user_id] = 1
 					print ("Infrequent user_id=",user_id)
-					for song_object in user_object.songs:
-						count = song_object.users[user_object]
+					for song_id in user_object.songs:
+						song_object = song_db[song_id]
+						count = song_object.users[user_object.user_id]
 						song_object.num_times_song_played -= count
-						del song_object.users[user_object]
+						del song_object.users[user_object.user_id]
 			for user_id in infrequent_user_map_temp:
 				del user_db[user_id]
 			print ("Infrequent user list len=",len(infrequent_user_map))
@@ -231,10 +248,11 @@ class DatasetReader:
 				if song_object.get_num_unique_users() < self.constants.MIN_USERS_COUNT:
 					infrequent_song_map[song_id] = 1
 					infrequent_song_map_temp[song_id] = 1
-					for user_object in song_db[song_id].users:
-						count = user_object.songs[song_object]
+					for user_id in song_db[song_id].users:
+						user_object = user_db[user_id]
+						count = user_object.songs[song_object.song_id]
 						user_object.num_songs_played -= count
-						del user_object.songs[song_object]
+						del user_object.songs[song_object.song_id]
 			for song_id in infrequent_song_map_temp:
 				del song_db[song_id]
 			print ("Infrequent song map len=",len(infrequent_song_map))
@@ -244,15 +262,16 @@ class DatasetReader:
 		
 		# append the song with missing mb_id
 		infrequent_song_map[""] = 1
+		Song.clear_song_id_to_int_id_map()
 		return user_db, infrequent_user_map, infrequent_song_map
 
 	def read_lastfm_1k_map_files(self):
 		user_db = {}
-		with open('../datasets/lastfm-dataset-1K/user_db.map', 'rb') as user_db_file:
+		with open('../datasets/lastfm-dataset-1K/post_processed_files/user_db.map', 'rb') as user_db_file:
 			user_db = pickle.load(user_db_file)
 
 		song_db = {}
-		with open('../datasets/lastfm-dataset-1K/song_db.map', 'rb') as song_db_file:
+		with open('../datasets/lastfm-dataset-1K/post_processed_files/song_db.map', 'rb') as song_db_file:
 			song_db = pickle.load(song_db_file)
 
 		return (user_db, song_db)
