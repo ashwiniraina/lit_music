@@ -31,7 +31,6 @@ class User:
 			self.songs[song_id] = count+1
 		else:
 			self.songs[song_id] = 1
-			
 		self.num_songs_played += 1
 
 	def get_num_unique_songs(self):
@@ -47,5 +46,3 @@ class User:
 			song_list += str(index)+":"+song_id+" "
 			index += 1
 		print(song_list)
-
-

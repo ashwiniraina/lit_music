@@ -1,5 +1,8 @@
 from DatasetReader import DatasetReader
 from Constants import Constants
+import numpy as np
+from scipy.sparse import csc_matrix
+
 
 constants = Constants()
 
@@ -9,9 +12,7 @@ dataset_reader = DatasetReader()
 print ("User db len=",len(user_db), " Song db len=", len(song_db))
 
 # load the pre-processed map files
-# (user_db, song_db) = dataset_reader.read(constants.MAPS_LASTFM_1K);
-# print ("User db len=",len(user_db), " Song db len=",len(song_db))
+#(user_db, song_db) = dataset_reader.read(constants.MAPS_LASTFM_1K);
+#print ("User db len=",len(user_db), " Song db len=",len(song_db))
 
-# write the play sessions files
-# dataset_reader.write_play_sessions_to_file(user_db)
-
+# dataset_reader.get_ratings_matrix(user_db, song_db)
