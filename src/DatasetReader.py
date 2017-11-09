@@ -48,11 +48,11 @@ class DatasetReader:
 			pickle.dump(user_db, user_db_file)
 		print ("user_db.map writing complete")
 		with open('../datasets/lastfm-dataset-1K/extracts/song_db.map', 'wb') as song_db_file:
-			pickle.dump(song_db, song_db_file)	
+			pickle.dump(song_db, song_db_file)
 		print ("song_db.map writing complete")
 		with open('../datasets/lastfm-dataset-1K/extracts/song_id_to_int_id.map', 'w') as song_id_to_int_id_file:
 			for song_id in song_db:
-				song_id_to_int_id_file.write(str(song_id)+","+str(song_db[song_id].get_song_id_int())+"\n")	
+				song_id_to_int_id_file.write(str(song_id)+","+str(song_db[song_id].get_song_id_int())+"\n")
 
 	def write_play_sessions_to_file(self, user_db):
 		for user_id in user_db:
@@ -287,6 +287,7 @@ class DatasetReader:
 	def read_30music_map_files(self):
 		print ("Nothing to do")
 
+        # change to use choi et al 2012
 	def get_ratings_matrix(self, user_db, song_db):
 		num_users = len(user_db.keys())
 		num_songs = len(song_db.keys())
