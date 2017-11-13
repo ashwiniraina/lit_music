@@ -30,7 +30,7 @@ class song2vecMF:
 
 
     def buildModel():
-        itemCache = simMatrix.rowColumnsCache(cacheSpec)
+        # itemCache = simMatrix.rowColumnsCache(cacheSpec)
 	for iter in range(1, numIters+1):
             loss = 0
             me = trainMatrix.tocoo()
@@ -67,10 +67,10 @@ class song2vecMF:
 		# i think looping over nearest neighbors here
 		# and simMatrix is probably a sparseMatrix of
 		# song similarites with nearest neighbors.
-		List<Integer> tj = itemCache.get(j);
-		if len(tj) > 0:
-		    for k in tj:
-			sim_jk = simMatrix[j, k]
+	        tj = simMatrix.getrow(j);
+		if tj.nnz > 0:
+		    for k in tj.indices:
+                        sim_jk = simMatrix[j,k]
 			if (sim_jk > 0):
 			    # \alpha * (s_ij - q_i^Tq_j)
 			    ejk = regAlpha * (sim_jk - Q[j,:].dot(Q[k,:]))
