@@ -10,6 +10,7 @@ import numpy as np
 from scipy.sparse import csc_matrix
 import random
 import collections
+import concurrent.futures
 
 class TrainTestSetGen:
 
@@ -162,72 +163,71 @@ class TrainTestSetGen:
 		print (test_set_songs)
 		return test_set_songs
 
+	def gen_user_train_test_sets(self, user_db, song_db, user_id):
+		song_list = list(song_db.keys())
+		num_test_songs = int(len(user_db[user_id].songs)*Constants.TEST_SET_RATIO)
+		print ("User_id=",user_id," num total songs =",len(user_db[user_id].songs)," num test songs = ",num_test_songs," num sessions =", len(user_db[user_id].play_sessions.sessions))
+
+		# loop through all the sessions for this user and find test set songs from the session
+		session_idx = 0
+		self.test_songs[user_id] = []
+		for session in user_db[user_id].play_sessions.sessions:
+			self.add_session_stats(self.all_session_stats, user_id, session)
+			session_song_id_ints = [x[1].song_id_int for x in session]
+			#print (session_song_id_ints)
+			num_songs_to_pick = round(num_test_songs*len(session_song_id_ints)/user_db[user_id].play_sessions.get_total_sessions_songs())
+			
+			self.pick_test_songs_equidistantly(user_id, session_idx, session_song_id_ints, num_songs_to_pick)
+			#self.pick_test_songs_randomly(user_id, session_idx, session_song_id_ints, num_songs_to_pick)
+			session_idx += 1
+			
+
+		#self.test_songs[user_id] = test_set_songs
+		print ("Test set size=",len(self.test_songs[user_id]))
+		#print ("Test set size=",len(self.test_songs[user_id])," songs ", self.test_songs[user_id])
+		self.print_user_session_stats(user_id, self.all_session_stats)
+
+		# loop through all the sessions for this user and create training/test sessions
+		start_index = 0
+		session_idx = 0
+		break_loop = 0
+		for session in user_db[user_id].play_sessions.sessions:
+			#print ("Session #", session_idx," num songs in session ",len(session_song_id_ints))
+			session_idx += 1
+			#print ("Session songs ", [x[1].song_id_int for x in session])
+			first_test_song = True
+			add_index = self.add_session(user_id, [x[1].song_id_int for x in session])
+			for song_id_int in self.test_songs[user_id]:
+				#print ("Removing song id int ", song_id_int," from the session, start_index=",start_index)
+				if first_test_song:
+					del_orig_session = self.create_training_sessions(user_id, song_id_int, self.training_sessions[user_id][add_index])
+					if (del_orig_session==True):
+						self.del_session(user_id, add_index)
+						first_test_song = False
+						#print ("Split sessions ", self.training_sessions[user_id])
+				else:
+					idx = start_index
+					for split_session in self.training_sessions[user_id][start_index:]:
+						del_orig_session = self.create_training_sessions(user_id, song_id_int, split_session)
+						if (del_orig_session==True):
+							self.del_session(user_id, idx)
+							#print ("Split sessions ", self.training_sessions[user_id])
+						else:
+							idx += 1
+				#print ("Split sessions final", self.training_sessions[user_id])
+			start_index = len(self.training_sessions[user_id])
+
+			if self.validate_and_write_training_sessions() != True:
+				break
+		self.print_user_session_stats(user_id, self.training_session_stats)
+
 	def split_data_into_train_test_sets(self, user_db, song_db):
 
 		random.seed(9001)
 
-		for user_id in user_db:
-			song_list = list(song_db.keys())
-			num_test_songs = int(len(user_db[user_id].songs)*Constants.TEST_SET_RATIO)
-			print ("User_id=",user_id," num total songs =",len(user_db[user_id].songs)," num test songs = ",num_test_songs," num sessions =", len(user_db[user_id].play_sessions.sessions))
-
-			# loop through all the sessions for this user and find test set songs from the session
-			session_idx = 0
-			self.test_songs[user_id] = []
-			for session in user_db[user_id].play_sessions.sessions:
-				self.add_session_stats(self.all_session_stats, user_id, session)
-				session_song_id_ints = [x[1].song_id_int for x in session]
-				#print (session_song_id_ints)
-				num_songs_to_pick = round(num_test_songs*len(session_song_id_ints)/user_db[user_id].play_sessions.get_total_sessions_songs())
-				
-				self.pick_test_songs_equidistantly(user_id, session_idx, session_song_id_ints, num_songs_to_pick)
-				#self.pick_test_songs_randomly(user_id, session_idx, session_song_id_ints, num_songs_to_pick)
-				session_idx += 1
-				
-
-			#self.test_songs[user_id] = test_set_songs
-			print ("Test set size=",len(self.test_songs[user_id]))
-			#print ("Test set size=",len(self.test_songs[user_id])," songs ", self.test_songs[user_id])
-			self.print_user_session_stats(user_id, self.all_session_stats)
-
-			# loop through all the sessions for this user and create training/test sessions
-			start_index = 0
-			session_idx = 0
-			break_loop = 0
-			for session in user_db[user_id].play_sessions.sessions:
-				#print ("Session #", session_idx," num songs in session ",len(session_song_id_ints))
-				session_idx += 1
-				#print ("Session songs ", [x[1].song_id_int for x in session])
-				first_test_song = True
-				add_index = self.add_session(user_id, [x[1].song_id_int for x in session])
-				for song_id_int in self.test_songs[user_id]:
-					#print ("Removing song id int ", song_id_int," from the session, start_index=",start_index)
-					if first_test_song:
-						del_orig_session = self.create_training_sessions(user_id, song_id_int, self.training_sessions[user_id][add_index])
-						if (del_orig_session==True):
-							self.del_session(user_id, add_index)
-							first_test_song = False
-							#print ("Split sessions ", self.training_sessions[user_id])
-					else:
-						idx = start_index
-						for split_session in self.training_sessions[user_id][start_index:]:
-							del_orig_session = self.create_training_sessions(user_id, song_id_int, split_session)
-							if (del_orig_session==True):
-								self.del_session(user_id, idx)
-								#print ("Split sessions ", self.training_sessions[user_id])
-							else:
-								idx += 1
-					#print ("Split sessions final", self.training_sessions[user_id])
-				start_index = len(self.training_sessions[user_id])
-
-				if self.validate_and_write_training_sessions() != True:
-					break
-			self.print_user_session_stats(user_id, self.training_session_stats)
-			#break
-
-				# if break_loop > 2:
-				# 	break
-				# break_loop += 1
+		executor = concurrent.futures.ProcessPoolExecutor(8)
+		futures = [executor.submit(self.gen_user_train_test_sets, user_db, song_db, user_id) for user_id in user_db]
+		concurrent.futures.wait(futures)
 
 		#self.validate_training_sessions()
 		#self.print_session_stats(self.training_session_stats)
