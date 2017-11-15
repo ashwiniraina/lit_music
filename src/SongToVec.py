@@ -5,22 +5,20 @@ import glob
 import numpy as np
 from scipy import spatial
 from sklearn.neighbors import NearestNeighbors
+from Constants import Constants
 
 class SongToVec:
 
-	individual_song_vectors = {}
-	individual_song_similarity_matrix = np.empty((0,0))
-
-	combined_song_vectors = {}
-	combined_song_vectors_array = []
-	combined_song_vectors_int_ids = []
-	combined_song_similarity_matrix = np.empty((0,0))
+	constants = Constants()
+	song_vectors = {}
+	song_vectors_array = []
+	song_vectors_int_ids = []
+	song_similarity_matrix = np.empty((0,0))
 
 	def __init__(self):
 		logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
-	def run(self):
-
+	def read_combined_sessions(self):
 		sessions = []
 		# read the user play session files
 		play_session_files = glob.glob("../datasets/lastfm-dataset-1K/extracts/play_session_*")
@@ -30,17 +28,40 @@ class SongToVec:
 					session_song_id_ints = session.strip("\n").split(",")[1::2] # select every odd element from the list
 					sessions.append(session_song_id_ints)
 					for song_id_int in session_song_id_ints:
-						if song_id_int not in self.combined_song_vectors:
-							self.combined_song_vectors[song_id_int] = [] # empty list, will be filled with song vector in generate_song_vectors
-		
-		model = self.run_word2vec_model(sessions)
+						if song_id_int not in self.song_vectors:
+							self.song_vectors[song_id_int] = [] # empty list, will be filled with song vector in generate_song_vectors
 
-		self.generate_song_vectors(model)
+		return sessions
 
-		self.find_knn_for_song_vectors(6)
+	def read_individual_sessions(self, user_id):
+		sessions = []
+		# read the user play session files
+		with open("../datasets/lastfm-dataset-1K/extracts/training_sessions_"+str(user_id), 'r') as ps_file:
+			for session in ps_file:
+				session_song_id_ints = session.strip("\n").split(",")[:-1] # last element is empty
+				sessions.append(session_song_id_ints)
+				for song_id_int in session_song_id_ints:
+					if song_id_int not in self.song_vectors:
+						self.song_vectors[song_id_int] = [] # empty list, will be filled with song vector in generate_song_vectors
 
-		#self.generate_similarity_matrix()
+		return sessions		
 
+	def run(self, user_db, song_db, mode):
+
+		if mode == self.constants.RUN_SONG2VEC_COMBINED:
+			sessions = self.read_combined_sessions()
+			model = self.run_word2vec_model(sessions)
+			self.generate_song_vectors(model, 'combined_song_vectors')
+			self.find_knn_for_song_vectors(self.constants.NUM_NEAREST_NEIGHBORS, 'combined_knn_song_sim_matrix')
+			#self.generate_similarity_matrix('combined_song_similarity_matrix')
+		else:
+			for user_id in user_db:
+				if user_id == 'user_000002':
+					sessions = self.read_individual_sessions(user_id)
+					model = self.run_word2vec_model(sessions)
+					self.generate_song_vectors(model, 'ind_song_vectors_'+str(user_id))
+					self.find_knn_for_song_vectors(self.constants.NUM_NEAREST_NEIGHBORS, 'ind_knn_song_sim_matrix_'+str(user_id))
+					#self.generate_similarity_matrix('ind_song_similarity_matrix_'+str(user_id))
 
 	def run_word2vec_model(self, sessions):
 
@@ -57,49 +78,48 @@ class SongToVec:
 
 		return model
 		
-	def generate_song_vectors(self, model):
-		with open('../datasets/lastfm-dataset-1K/extracts/song_vectors', 'w') as song_vectors_file:
-			for song_id_int in self.combined_song_vectors:
-				self.combined_song_vectors[song_id_int] = model.wv[song_id_int]
-				self.combined_song_vectors_array.append(self.combined_song_vectors[song_id_int])
-				self.combined_song_vectors_int_ids.append(song_id_int)
-				#print ("song :",song_id_int," vector: ",self.combined_song_vectors[song_id_int])
-				song_vectors_file.write(str(song_id_int)+","+str(self.combined_song_vectors[song_id_int])+"\n")
+	def generate_song_vectors(self, model, filename):
+		with open('../datasets/lastfm-dataset-1K/extracts/'+filename, 'w') as song_vectors_file:
+			for song_id_int in self.song_vectors:
+				self.song_vectors[song_id_int] = model.wv[song_id_int]
+				self.song_vectors_array.append(self.song_vectors[song_id_int])
+				self.song_vectors_int_ids.append(song_id_int)
+				#print ("song :",song_id_int," vector: ",self.song_vectors[song_id_int])
+				song_vectors_file.write(str(song_id_int)+","+str(self.song_vectors[song_id_int])+"\n")
 
-	def find_knn_for_song_vectors(self, k):
-		nbrs = NearestNeighbors(k, algorithm='auto').fit(self.combined_song_vectors_array)
-		distance, indices = nbrs.kneighbors(self.combined_song_vectors_array)
+	def find_knn_for_song_vectors(self, k, filename):
+		nbrs = NearestNeighbors(k, algorithm='auto').fit(self.song_vectors_array)
+		distance, indices = nbrs.kneighbors(self.song_vectors_array)
 
-		with open('../datasets/lastfm-dataset-1K/extracts/combined_knn_song_sim_matrix', 'w') as sim_matrix_file:
-			for i in range(0,len(self.combined_song_vectors_int_ids)):
-				song_i = self.combined_song_vectors_int_ids[i]
+		with open('../datasets/lastfm-dataset-1K/extracts/'+filename, 'w') as sim_matrix_file:
+			for i in range(0,len(self.song_vectors_int_ids)):
+				song_i = self.song_vectors_int_ids[i]
 				#print (song_i)
 				nbrs_i = indices[i,:]
 				#print (nbrs_i)
 				dist_i = distance[i,:]
 				#print (dist_i)
 				for j in range(1,len(nbrs_i)): # 0 is the song_i itself
-					song_j = self.combined_song_vectors_int_ids[nbrs_i[j]]
+					song_j = self.song_vectors_int_ids[nbrs_i[j]]
 					dist_i_j = dist_i[j] 
 					sim_matrix_file.write(str(song_i)+":"+str(song_j)+","+str(dist_i_j)+"\n")
 
-	def generate_similarity_matrix(self):
-		self.combined_song_similarity_matrix = np.zeros((len(self.combined_song_vectors), len(self.combined_song_vectors)))
+	def generate_similarity_matrix(self, filename):
+		self.song_similarity_matrix = np.zeros((len(self.song_vectors), len(self.song_vectors)))
 
-		with open('../datasets/lastfm-dataset-1K/extracts/combined_song_similarity_matrix', 'w') as sim_matrix_file:
+		with open('../datasets/lastfm-dataset-1K/extracts/'+filename, 'w') as sim_matrix_file:
 			i=j=0
-			print ("Length of combined song vectors =",len(self.combined_song_vectors))
-			for song_vec_i in self.combined_song_vectors:
-				print ("Writing row ",i," of combined song similarity matrix to file ")
-				for song_vec_j in self.combined_song_vectors:
-					#print ("computing similarity for song vec i=",self.combined_song_vectors[song_vec_i]," and song vec j=",self.combined_song_vectors[song_vec_j])
-					#self.combined_song_similarity_matrix[i][j] = 1-spatial.distance.cosine(self.combined_song_vectors[song_vec_i], self.combined_song_vectors[song_vec_j])
-					#print ("similarity matrix [",i,"],[",j,"] = ", self.combined_song_similarity_matrix[i][j])
-					sim_matrix_file.write(str(i)+","+str(j)+","+str(1-spatial.distance.cosine(self.combined_song_vectors[song_vec_i], self.combined_song_vectors[song_vec_j]))+"\n")
+			print ("Length of song vectors =",len(self.song_vectors))
+			for song_vec_i in self.song_vectors:
+				print ("Writing row ",i," of song similarity matrix to file ")
+				for song_vec_j in self.song_vectors:
+					#print ("computing similarity for song vec i=",self.song_vectors[song_vec_i]," and song vec j=",self.song_vectors[song_vec_j])
+					#self.song_similarity_matrix[i][j] = 1-spatial.distance.cosine(self.song_vectors[song_vec_i], self.song_vectors[song_vec_j])
+					#print ("similarity matrix [",i,"],[",j,"] = ", self.song_similarity_matrix[i][j])
+					sim_matrix_file.write(str(i)+","+str(j)+","+str(1-spatial.distance.cosine(self.song_vectors[song_vec_i], self.song_vectors[song_vec_j]))+"\n")
 					j += 1
 				i += 1
 				j = 0
-		print ("combined song similiarity matrix written to file.")
-
+		print ("song similiarity matrix written to file.")
 
 

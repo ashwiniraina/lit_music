@@ -18,9 +18,13 @@ print ("User db len=",len(user_db), " Song db len=",len(song_db))
 
 # dataset_reader.get_ratings_matrix(user_db, song_db)
 
-train_test_set_gen = TrainTestSetGen()
-train_test_set_gen.split_data_into_train_test_sets(user_db, song_db)
+# train_test_set_gen = TrainTestSetGen()
+# train_test_set_gen.split_data_into_train_test_sets(user_db, song_db)
 
-# run the SongToVec model
-# song_to_vec = SongToVec()
-# song_to_vec.run()
+# run the SongToVec model on combined song sequences for all users
+# song_to_vec_comb = SongToVec()
+# song_to_vec_comb.run(user_db, song_db, constants.RUN_SONG2VEC_COMBINED)
+
+# run the SongToVec model on individual user song sequences
+song_to_vec_ind = SongToVec()
+song_to_vec_ind.run(user_db, song_db, constants.RUN_SONG2VEC_INDIVIDUAL)
