@@ -6,7 +6,7 @@ import datetime as dt
 import pickle
 import sys
 import numpy as np
-from scipy.sparse import csc_matrix
+from scipy.sparse import csc_matrix, diags
 
 class DatasetReader:
 	constants = Constants()
@@ -288,16 +288,22 @@ class DatasetReader:
 	def read_30music_map_files(self):
 		print ("Nothing to do")
 
-        # change to use choi et al 2012
 	def get_ratings_matrix(self, user_db, song_db):
 		num_users = len(user_db.keys())
 		num_songs = len(song_db.keys())
-		ratings_mat = csc_matrix((num_users, num_songs), dtype=np.int16) # a matrix of normalized counts
-
+		# a matrix of normalized counts
+		ratings_mat = csc_matrix((num_users, num_songs), dtype=np.int16)
+		max_song_rating = numpy.zeros(1,num_songs)
 		for user_id, user_obj in user_db.items():
 			user_id_int = int(user_id[5:])
-			for song_id,count in user_obj.songs.items():
-				#song_id = int(''.join(song_obj.song_id.split('-')), base=16)
-				ratings_mat[user_id, song_db[song_id].song_id_int] = count/user_obj.num_songs_played # normalized count
 
+			for song_obj,count in user_obj.songs.items():
+				song_id_int = song_db[song_id].song_id_int
+				# normalized count
+				rating = np.log(count/user_obj.num_songs_played + 1)
+				ratings_mat[user_id, song_id_int] = rating
+				max_song_rating = max(max_song_rating[song_id_ing], rating)
+
+		ratings_mat.dot(diags([1/max_song_rating])) * 5
 		np.save('../datasets/lastfm-dataset-1K/extracts/rating_mat', ratings_mat)
+
