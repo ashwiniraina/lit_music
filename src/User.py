@@ -21,7 +21,7 @@ class User:
 		self.country = country
 		self.reg_date = reg_date
 		self.play_sessions = PlaySessions(self)
-		self.songs = {}
+		self.songs = {} # maps song_id to play count
 		self.num_songs_played = 0
 
 	def set_user_stats(self, song):

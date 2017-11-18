@@ -205,6 +205,9 @@ class DatasetReader:
 				song_info = song_event.strip("\n").split("\t")
 				user_id = song_info[0]
 				song_id = song_info[-2]
+				# ignore songs with empty mb_id
+				if song_id == "":
+					continue
 				#print ("Index: ",loop," user_id: ",user_id," timestamp=",timestamp," song id ",song_id)
 				if song_id not in song_db:
 					# index 2 is artist_id, 3 is artist_name, 4 is song_id, 5 is song_name
@@ -221,8 +224,6 @@ class DatasetReader:
 				loop += 1
 
 		print ("Before post processing num valid users=",len(user_db)," Num valid songs=",len(song_db))
-
-		print (song_db[""].song_name, song_db[""].artist_name)
 
 		infrequent_user_map = {}
 		infrequent_song_map = {}
@@ -295,8 +296,8 @@ class DatasetReader:
 
 		for user_id, user_obj in user_db.items():
 			user_id_int = int(user_id[5:])
-			for song_obj,count in user_obj.songs.items():
-				song_id = int(''.join(song_obj.song_id.split('-')), base=16)
-				ratings_mat[user_id, song_id] = count/user_obj.num_songs_played # normalized count
+			for song_id,count in user_obj.songs.items():
+				#song_id = int(''.join(song_obj.song_id.split('-')), base=16)
+				ratings_mat[user_id, song_db[song_id].song_id_int] = count/user_obj.num_songs_played # normalized count
 
-		save_npz('../datasets/lastfm-dataset-1K/extracts/rating_mat.npz', ratings_mat)
+		np.save('../datasets/lastfm-dataset-1K/extracts/rating_mat', ratings_mat)

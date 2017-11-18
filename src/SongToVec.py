@@ -6,14 +6,16 @@ import numpy as np
 from scipy import spatial
 from sklearn.neighbors import NearestNeighbors
 from Constants import Constants
+from metric_learn import MMC, MMC_Supervised
+import matplotlib.pyplot as plt
 
 class SongToVec:
 
 	constants = Constants()
-	song_vectors = {}
+	song_vectors = {} # map of song_id_int to song vector
 	song_vectors_array = []
 	song_vectors_int_ids = []
-	song_similarity_matrix = np.empty((0,0))
+	#song_similarity_matrix = np.empty((0,0))
 
 	def __init__(self):
 		logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
@@ -53,15 +55,15 @@ class SongToVec:
 			model = self.run_word2vec_model(sessions)
 			self.generate_song_vectors(model, 'combined_song_vectors')
 			self.find_knn_for_song_vectors(self.constants.NUM_NEAREST_NEIGHBORS, 'combined_knn_song_sim_matrix')
-			#self.generate_similarity_matrix('combined_song_similarity_matrix')
 		else:
 			for user_id in user_db:
 				if user_id == 'user_000002':
-					sessions = self.read_individual_sessions(user_id)
-					model = self.run_word2vec_model(sessions)
-					self.generate_song_vectors(model, 'ind_song_vectors_'+str(user_id))
-					self.find_knn_for_song_vectors(self.constants.NUM_NEAREST_NEIGHBORS, 'ind_knn_song_sim_matrix_'+str(user_id))
-					#self.generate_similarity_matrix('ind_song_similarity_matrix_'+str(user_id))
+					#sessions = self.read_individual_sessions(user_id)
+					#model = self.run_word2vec_model(sessions)
+					#self.generate_song_vectors(model, 'ind_song_vectors_'+str(user_id))
+					#self.generate_full_similarity_matrix('ind_full_song_sim_matrix_'+str(user_id))
+					#self.find_knn_for_song_vectors(self.constants.NUM_NEAREST_NEIGHBORS, 'ind_knn_song_sim_matrix_'+str(user_id))
+					self.transform_song_vectors(user_id)
 
 	def run_word2vec_model(self, sessions):
 
@@ -104,22 +106,60 @@ class SongToVec:
 					dist_i_j = dist_i[j] 
 					sim_matrix_file.write(str(song_i)+":"+str(song_j)+","+str(dist_i_j)+"\n")
 
-	def generate_similarity_matrix(self, filename):
-		self.song_similarity_matrix = np.zeros((len(self.song_vectors), len(self.song_vectors)))
+	def generate_full_similarity_matrix(self, filename):
+		#self.song_similarity_matrix = np.zeros((len(self.song_vectors), len(self.song_vectors)))
 
 		with open('../datasets/lastfm-dataset-1K/extracts/'+filename, 'w') as sim_matrix_file:
-			i=j=0
+			i=0
 			print ("Length of song vectors =",len(self.song_vectors))
-			for song_vec_i in self.song_vectors:
+			song_id_ints = list(self.song_vectors.keys())
+			for song_id_int_row in song_id_ints:
 				print ("Writing row ",i," of song similarity matrix to file ")
-				for song_vec_j in self.song_vectors:
-					#print ("computing similarity for song vec i=",self.song_vectors[song_vec_i]," and song vec j=",self.song_vectors[song_vec_j])
-					#self.song_similarity_matrix[i][j] = 1-spatial.distance.cosine(self.song_vectors[song_vec_i], self.song_vectors[song_vec_j])
-					#print ("similarity matrix [",i,"],[",j,"] = ", self.song_similarity_matrix[i][j])
-					sim_matrix_file.write(str(i)+","+str(j)+","+str(1-spatial.distance.cosine(self.song_vectors[song_vec_i], self.song_vectors[song_vec_j]))+"\n")
-					j += 1
+				write_str = ""
+				for j in range(i,len(song_id_ints)):
+					song_id_int_col = song_id_ints[j]
+					write_str += str(song_id_int_row)+","+str(song_id_int_col)+","+str(1-spatial.distance.cosine(self.song_vectors[song_id_int_row], self.song_vectors[song_id_int_col]))+"\n"
+				sim_matrix_file.write(write_str)
 				i += 1
-				j = 0
-		print ("song similiarity matrix written to file.")
+		print ("full song similiarity matrix written to file.")
+
+	def get_song_pairs(self, idxs, song_pairs):
+		mat = song_pairs[idxs]
+		return (mat[:,0], mat[:,1])
+
+	def transform_song_vectors(self, user_id):
+
+		# read user similarity matrix
+		user_sim = np.loadtxt('../datasets/lastfm-dataset-1K/extracts/ind_full_song_sim_matrix_'+str(user_id), delimiter=',', usecols=2)
+		# plt.hist(user_sim)
+		# plt.show()
+		# user_sim[i] is the similarity of the songs in song_pairs[i]
+		song_pairs = np.loadtxt('../datasets/lastfm-dataset-1K/extracts/ind_full_song_sim_matrix_'+str(user_id), delimiter=',', usecols=[0,1], dtype=np.int)
+
+		# songs that have a similarity value within the 10th percentile of
+		# similarity values are considered similar.
+		sim_cut_off = len(user_sim) - int(len(user_sim)/10)
+		sim_songs_idxs = np.argpartition(user_sim, sim_cut_off)
+		# a[i] and b[i] are similar songs
+		a,b = self.get_song_pairs(sim_songs_idxs[sim_cut_off:], song_pairs)
+
+		# songs with similarity values greater than the 90th percentile are
+		# considered dissimilar.
+		dissim_cut_off = int(len(user_sim)/10)
+		dissim_songs_idxs = np.argpartition(user_sim, dissim_cut_off)
+		# c[i] and d[i] are dissimilar songs.
+		c,d = self.get_song_pairs(dissim_songs_idxs[:dissim_cut_off], song_pairs)
+
+		# read song features
+		song_features = np.loadtxt('../datasets/lastfm-dataset-1K/extracts/combined_song_vectors')
+		song_ids = song_features[:,0].astype(np.int)
+		arg_sorted_ids = np.argsort(song_ids)
+		song_features = song_features[arg_sorted_ids,1:]
+		mmc = MMC(max_iter=1000)
+		constraints = (np.array(a),np.array(b),np.array(c),np.array(d))
+		transformed_songs = mmc.fit_transform(song_features, constraints)
+		# np.save('song_features', song_features)
+		np.save('../datasets/lastfm-dataset-1K/extracts/transformed_songs_vectors_'+str(user_id), transformed_songs)
+
 
 
