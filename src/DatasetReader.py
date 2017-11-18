@@ -6,7 +6,7 @@ import datetime as dt
 import pickle
 import sys
 import numpy as np
-from scipy.sparse import csc_matrix, diags
+from scipy.sparse import csr_matrix, diags, coo_matrix, save_npz
 
 class DatasetReader:
 	constants = Constants()
@@ -117,9 +117,9 @@ class DatasetReader:
 							num_play_sessions += 1
 							#print ("Added session user_id=",user_id," session len=",len(play_session)," num play sessions=",num_play_sessions," sessions=",[(x[0],x[1].song_id_int) for x in play_session])
 							# if len(play_session) > 150:
-							# 	print ("Long listening session len=",len(play_session), [(x[0],x[1].song_id) for x in play_session])
+							#	print ("Long listening session len=",len(play_session), [(x[0],x[1].song_id) for x in play_session])
 						# else:
-						# 	print ("Short listening session len=",len(play_session), [x[1].song_id for x in play_session])
+						#	print ("Short listening session len=",len(play_session), [x[1].song_id for x in play_session])
 						play_session = []
 						num_interrrupted_sessions += 1
 						#print ("Found interrupted session, user_id=",user_id," seconds elapsed=",seconds_elapsed," num songs in session=",len(play_session)," total interrupted sessions=",num_interrrupted_sessions)
@@ -228,7 +228,6 @@ class DatasetReader:
 		infrequent_user_map = {}
 		infrequent_song_map = {}
 		while True:
-
 			# find infrequent users
 			infrequent_user_map_temp = {}
 			for user_id in user_db:
@@ -289,11 +288,12 @@ class DatasetReader:
 		print ("Nothing to do")
 
 	def get_ratings_matrix(self, user_db, song_db):
-		num_users = len(user_db.keys())
+		# len(user_db.keys())
+		num_users = Constants.TOTAL_USERS_LASTFM_1K
 		num_songs = len(song_db.keys())
 		# a matrix of normalized counts
-		ratings_mat = csc_matrix((num_users, num_songs), dtype=np.int16)
-		max_song_rating = np.zeros((num_songs))
+		max_song_rating = np.zeros(num_songs)
+		data, row, col = [],[],[]
 		for user_id, user_obj in user_db.items():
 			user_id_int = int(user_id[5:])
 
@@ -301,9 +301,14 @@ class DatasetReader:
 				song_id_int = int(song_db[song_id].song_id_int)
 				# normalized count
 				rating = np.log(float(count)/float(user_obj.num_songs_played) + 1)
-				ratings_mat[user_id_int, song_id_int] = rating
+				# ratings_mat[user_id_int, song_id_int] = rating
+				data.append(rating)
+				row.append(user_id_int - 1)
+				col.append(song_id_int)
 				max_song_rating[song_id_int] = max(max_song_rating[song_id_int], rating)
 
-		ratings_mat.dot(diags([1/max_song_rating])) * 5
-		np.save('../datasets/lastfm-dataset-1K/extracts/rating_mat', ratings_mat)
-
+		ratings_mat = coo_matrix((data, (row,col)), shape=(num_users, num_songs))
+		# print(ratings_mat.shape)
+		# print(diags(1/max_song_rating).shape)
+		ratings_mat = ratings_mat.dot(diags(1/max_song_rating)) * 5
+		save_npz('../datasets/lastfm-dataset-1K/extracts/rating_mat', ratings_mat)

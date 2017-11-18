@@ -4,7 +4,7 @@ import numpy as np
 #from scipy.sparse import csc_matrix
 from SongToVec import SongToVec
 from TrainTestSetGen import TrainTestSetGen
-from UserNN import UserNN
+# from UserNN import UserNN
 
 constants = Constants()
 
