@@ -15,15 +15,19 @@ train_ratings[test_songs_for_user2] = 0
 test_ratings = user2_ratings[test_songs_for_user2]
 
 # output train data
-data,row,col= coo_matrix(train_ratings).tocoo()
-output  = '\n'.join([' '.join(entry) for entry in zip(data,row,col)])
+train_ratings = csr_matrix(train_ratings).tocoo()
+data, row, col = train_ratings.data, train_ratings.row, train_ratings.col
+row += 2
+output  = '\n'.join([' '.join([str(x) for x in entry]) for entry in zip(row,col,data)])
 f = open('../datasets/lastfm-dataset-1K/extracts/trainset_user_000002', 'w')
 f.write(output)
 f.close()
 
 # output train data
-data,row,col= coo_matrix(test_ratings).tocoo()
-output  = '\n'.join([' '.join(entry) for entry in zip(data,row,col)])
+test_ratings = csr_matrix(test_ratings).tocoo()
+data, row, col = test_ratings.data, test_ratings.row, test_ratings.col
+row +=2
+output  = '\n'.join([' '.join([str(x) for x in entry]) for entry in zip(row,col,data)])
 f = open('../datasets/lastfm-dataset-1K/extracts/testset_user_000002', 'w')
 f.write(output)
 f.close()
