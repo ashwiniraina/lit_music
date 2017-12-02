@@ -20,10 +20,10 @@ class SongToVec:
 	def __init__(self):
 		logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
-	def read_combined_sessions(self):
+	def read_combined_sessions(self, user_id="*"):
 		sessions = []
 		# read the user play session files
-		play_session_files = glob.glob("../datasets/lastfm-dataset-1K/extracts/play_session_*")
+		play_session_files = glob.glob("../datasets/lastfm-dataset-1K/extracts/play_session_"+user_id)
 		for play_session_file in play_session_files:
 			with open(play_session_file, 'r') as ps_file:
 				for session in ps_file:
@@ -32,43 +32,84 @@ class SongToVec:
 					for song_id_int in session_song_id_ints:
 						if song_id_int not in self.song_vectors:
 							self.song_vectors[song_id_int] = [] # empty list, will be filled with song vector in generate_song_vectors
+		return sessions	
 
-		return sessions
-
-	def read_individual_sessions(self, user_id):
+	def read_combined_sessions_minus_test_songs(self, user_id):
 		sessions = []
 		# read the user play session files
-		with open("../datasets/lastfm-dataset-1K/extracts/training_sessions_"+str(user_id), 'r') as ps_file:
-			for session in ps_file:
+		play_session_files = glob.glob("../datasets/lastfm-dataset-1K/extracts/play_session_*")
+		for play_session_file in play_session_files:
+			if user_id not in play_session_file:
+				with open(play_session_file, 'r') as ps_file:
+					for session in ps_file:
+						session_song_id_ints = session.strip("\n").split(",")[1::2] # select every odd element from the list
+						sessions.append(session_song_id_ints)
+						for song_id_int in session_song_id_ints:
+							if song_id_int not in self.song_vectors:
+								self.song_vectors[song_id_int] = [] # empty list, will be filled with song vector in generate_song_vectors
+
+		with open("../datasets/lastfm-dataset-1K/extracts/training_sessions_"+str(user_id), 'r') as training_file:
+			for session in training_file:
+				session_song_id_ints = session.strip("\n").split(",")[:-1] # last element is empty
+				sessions.append(session_song_id_ints)
+				for song_id_int in session_song_id_ints:
+					if song_id_int not in self.song_vectors:
+						self.song_vectors[song_id_int] = [] # empty list, will be filled with song vector in generate_song_vectors
+		return sessions
+
+	def read_individual_sessions(self, user_id, mode):
+		sessions = []
+		# read the user play session files
+		with open("../datasets/lastfm-dataset-1K/extracts/training_sessions_"+str(user_id), 'r') as training_file:
+			for session in training_file:
 				session_song_id_ints = session.strip("\n").split(",")[:-1] # last element is empty
 				sessions.append(session_song_id_ints)
 				for song_id_int in session_song_id_ints:
 					if song_id_int not in self.song_vectors:
 						self.song_vectors[song_id_int] = [] # empty list, will be filled with song vector in generate_song_vectors
 
-		return sessions		
+		# if mode == self.constants.RUN_SONG2VEC_ON_ALL_USER_SONGS:
+		# 	# read the user play test session files
+		# 	with open("../datasets/lastfm-dataset-1K/extracts/test_songs_"+str(user_id), 'r') as test_file:
+		# 		for song in test_file:
+		# 			song_id_int = song.strip("\n")
+		# 			sessions.append(song_id_int)
+		# 			self.song_vectors[song_id_int] = [] # empty list, will be filled with song vector in generate_song_vectors
+		return sessions
 
 	def run(self, user_db, song_db, mode):
 
-		if mode == self.constants.RUN_SONG2VEC_COMBINED:
-			sessions = self.read_combined_sessions()
-			model = self.run_word2vec_model(sessions)
-			self.generate_song_vectors(model, 'combined_song_vectors')
-			self.find_knn_for_song_vectors(self.constants.NUM_NEAREST_NEIGHBORS, 'combined_knn_song_sim_matrix')
-		else:
+		if mode == self.constants.RUN_SONG2VEC_ON_ALL_SONGS:
 			for user_id in user_db:
 				if user_id == 'user_000002':
-					#sessions = self.read_individual_sessions(user_id)
-					#model = self.run_word2vec_model(sessions)
-					#self.generate_song_vectors(model, 'ind_song_vectors_'+str(user_id))
-					#self.generate_full_similarity_matrix('ind_full_song_sim_matrix_'+str(user_id))
+					sessions = self.read_combined_sessions_minus_test_songs(user_id)
+					model = self.run_word2vec_model(sessions)
+					self.generate_song_vectors(model, 'combined_song_vectors')
+					self.find_knn_for_song_vectors(self.constants.NUM_NEAREST_NEIGHBORS, 'combined_knn_song_sim_matrix')
+		elif mode == self.constants.RUN_SONG2VEC_ON_USER_TRAINING_SONGS:
+			for user_id in user_db:
+				if user_id == 'user_000002':
+					sessions = self.read_individual_sessions(user_id, mode)
+					model = self.run_word2vec_model(sessions)
+					self.generate_song_vectors(model, 'ind_song_vectors_'+str(user_id))
+					self.generate_full_similarity_matrix('ind_full_song_sim_matrix_'+str(user_id))
 					#self.find_knn_for_song_vectors(self.constants.NUM_NEAREST_NEIGHBORS, 'ind_knn_song_sim_matrix_'+str(user_id))
 					self.transform_song_vectors(user_id)
+		elif mode == self.constants.RUN_SONG2VEC_ON_ALL_USER_SONGS:
+			for user_id in user_db:
+				if user_id == 'user_000002':
+					sessions = self.read_combined_sessions(user_id)
+					model = self.run_word2vec_model(sessions)
+					self.generate_song_vectors(model, 'ind_song_vectors_train_and_test_'+str(user_id))
+					self.generate_full_similarity_matrix('ind_full_song_sim_matrix_train_and_test_'+str(user_id))
+		else:
+			print ("error : incorrect mode")
+			return
 
 	def run_word2vec_model(self, sessions):
 
 		# train the skip-gram model; default window=5
-		model = word2vec.Word2Vec(sessions, size=10, window=5, min_count=1, workers=4)
+		model = word2vec.Word2Vec(sessions, size=30, window=5, min_count=1, workers=4)
 		 
 		# # pickle the entire model to disk, so we can load&resume training later
 		# model.save('../datasets/lastfm-dataset-1K/extracts/song2vec.model')
