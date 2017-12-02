@@ -9,13 +9,13 @@ class Evaluator:
     
     # input arguments are dictionaries which maps user_id to list of lists. 
     # list of lists is the top-n recommendation for each test song
-    def precision(actual_rec_list, predicted_rec_list):
+    def precision(actual_rec_dict, predicted_rec_dict):
     	total_precision_sum = 0.0
     	num_users = 0
 
-    	for user_id in actual_rec_list:
-    		user_actual_rec_list = actual_rec_list[user_id]
-    		user_predicted_rec_list = predicted_rec_list[user_id]
+    	for user_id in actual_rec_dict:
+    		user_actual_rec_list = actual_rec_dict[user_id]
+    		user_predicted_rec_list = predicted_rec_dict[user_id]
     		num_users += 1.0
     		user_precision_sum += 0.0
     		num_test_songs = 0.0
@@ -40,13 +40,13 @@ class Evaluator:
 
     # input arguments are dictionaries which maps user_id to list of lists. 
     # list of lists is the top-n recommendation for each test song
-    def map(actual_rec_list, predicted_rec_list):
+    def map(actual_rec_dict, predicted_rec_dict):
     	total_map_sum = 0.0
     	num_users = 0
 
-    	for user_id in actual_rec_list:
-    		user_actual_rec_list = actual_rec_list[user_id]
-    		user_predicted_rec_list = predicted_rec_list[user_id]
+    	for user_id in actual_rec_dict:
+    		user_actual_rec_list = actual_rec_dict[user_id]
+    		user_predicted_rec_list = predicted_rec_dict[user_id]
     		num_users += 1.0
     		user_map_sum += 0.0
     		num_test_songs = 0.0
