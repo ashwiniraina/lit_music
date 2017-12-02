@@ -21,12 +21,12 @@ class Evaluator:
     		num_test_songs = 0.0
 
     		for i in range(0, len(user_actual_rec_list)):
+    			num_test_songs += 1.0
     			test_song_actual_rec_list = user_actual_rec_list[i]
     			test_song_predicted_rec_list = user_predicted_rec_list[i]
     			num_matches = 0.0
 
-    			for song_id_int in test_song_predicted_rec_list:
-    				num_test_songs += 1.0
+    			for song_id_int in test_song_predicted_rec_list:	
     				if song_id_int in test_song_actual_rec_list:
     					num_matches += 1.0
 				
@@ -52,6 +52,7 @@ class Evaluator:
     		num_test_songs = 0.0
 
     		for i in range(0, len(user_actual_rec_list)):
+    			num_test_songs += 1.0
     			test_song_actual_rec_list = user_actual_rec_list[i]
     			test_song_predicted_rec_list = user_predicted_rec_list[i]
 		    	precision = []
