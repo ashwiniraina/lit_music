@@ -1,4 +1,3 @@
-
 from gensim.models import word2vec
 import logging
 import glob
@@ -46,7 +45,7 @@ class SongToVec:
 					if song_id_int not in self.song_vectors:
 						self.song_vectors[song_id_int] = [] # empty list, will be filled with song vector in generate_song_vectors
 
-		return sessions		
+		return sessions
 
 	def run(self, user_db, song_db, mode):
 
@@ -69,7 +68,7 @@ class SongToVec:
 
 		# train the skip-gram model; default window=5
 		model = word2vec.Word2Vec(sessions, size=10, window=5, min_count=1, workers=4)
-		 
+
 		# # pickle the entire model to disk, so we can load&resume training later
 		# model.save('../datasets/lastfm-dataset-1K/extracts/song2vec.model')
 		# # store the learned weights, in a format the original C tool understands
@@ -79,7 +78,7 @@ class SongToVec:
 		# model = word2vec.Word2Vec.load_word2vec_format('../datasets/lastfm-dataset-1K/extracts/song2vec.model.bin', binary=True)
 
 		return model
-		
+
 	def generate_song_vectors(self, model, filename):
 		with open('../datasets/lastfm-dataset-1K/extracts/'+filename, 'w') as song_vectors_file:
 			for song_id_int in self.song_vectors:
@@ -103,7 +102,7 @@ class SongToVec:
 				#print (dist_i)
 				for j in range(1,len(nbrs_i)): # 0 is the song_i itself
 					song_j = self.song_vectors_int_ids[nbrs_i[j]]
-					dist_i_j = dist_i[j] 
+					dist_i_j = dist_i[j]
 					sim_matrix_file.write(str(song_i)+":"+str(song_j)+","+str(dist_i_j)+"\n")
 
 	def generate_full_similarity_matrix(self, filename):
@@ -122,44 +121,3 @@ class SongToVec:
 				sim_matrix_file.write(write_str)
 				i += 1
 		print ("full song similiarity matrix written to file.")
-
-	def get_song_pairs(self, idxs, song_pairs):
-		mat = song_pairs[idxs]
-		return (mat[:,0], mat[:,1])
-
-	def transform_song_vectors(self, user_id):
-
-		# read user similarity matrix
-		user_sim = np.loadtxt('../datasets/lastfm-dataset-1K/extracts/ind_full_song_sim_matrix_'+str(user_id), delimiter=',', usecols=2)
-		# plt.hist(user_sim)
-		# plt.show()
-		# user_sim[i] is the similarity of the songs in song_pairs[i]
-		song_pairs = np.loadtxt('../datasets/lastfm-dataset-1K/extracts/ind_full_song_sim_matrix_'+str(user_id), delimiter=',', usecols=[0,1], dtype=np.int)
-
-		# songs that have a similarity value within the 10th percentile of
-		# similarity values are considered similar.
-		sim_cut_off = len(user_sim) - int(len(user_sim)/10)
-		sim_songs_idxs = np.argpartition(user_sim, sim_cut_off)
-		# a[i] and b[i] are similar songs
-		a,b = self.get_song_pairs(sim_songs_idxs[sim_cut_off:], song_pairs)
-
-		# songs with similarity values greater than the 90th percentile are
-		# considered dissimilar.
-		dissim_cut_off = int(len(user_sim)/10)
-		dissim_songs_idxs = np.argpartition(user_sim, dissim_cut_off)
-		# c[i] and d[i] are dissimilar songs.
-		c,d = self.get_song_pairs(dissim_songs_idxs[:dissim_cut_off], song_pairs)
-
-		# read song features
-		song_features = np.loadtxt('../datasets/lastfm-dataset-1K/extracts/combined_song_vectors')
-		song_ids = song_features[:,0].astype(np.int)
-		arg_sorted_ids = np.argsort(song_ids)
-		song_features = song_features[arg_sorted_ids,1:]
-		mmc = MMC(max_iter=1000)
-		constraints = (np.array(a),np.array(b),np.array(c),np.array(d))
-		transformed_songs = mmc.fit_transform(song_features, constraints)
-		# np.save('song_features', song_features)
-		np.save('../datasets/lastfm-dataset-1K/extracts/transformed_songs_vectors_'+str(user_id), transformed_songs)
-
-
-
