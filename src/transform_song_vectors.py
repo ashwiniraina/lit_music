@@ -43,18 +43,20 @@ def transform_song_vectors(user_id):
 
     print(len(c),len(d),len(a),len(b))
     # read song features
-    song_features = np.loadtxt('../datasets/lastfm-dataset-1K/extracts/combined_song_vectors_' + user_id)
+    song_features = np.loadtxt('../datasets/lastfm-dataset-1K/extracts/combined_song_vectors_' +
+                               user_id)
     song_ids = song_features[:,0].astype(np.int)
     arg_sorted_ids = np.argsort(song_ids)
     song_features = song_features[arg_sorted_ids,1:] # sort songs by song id, and remove id column
     song_features = song_features[user_song_ids,:]
-    mmc = MMC(max_iter=1000)
+    mmc = MMC(max_iter=10000)
     constraints = (np.array(a),np.array(b),np.array(c),np.array(d))
     transformed_songs = mmc.fit_transform(song_features, constraints)
     # np.save('song_features', song_features)
-    np.save('../datasets/lastfm-dataset-1K/extracts/transformed_songs_vectors_'+str(user_id), transformed_songs)
+    np.save('../datasets/lastfm-dataset-1K/extracts/transformed_songs_vectors_' +
+            str(user_id), transformed_songs)
     mapping_list = np.array([[orig_id,user_id] for orig_id, user_id in mapping.items()])
     np.save('../datasets/lastfm-dataset-1K/extracts/song_mapping_'+str(user_id), mapping_list)
 
-if __name__ = "__main__":
+if __name__ == "__main__":
     transform_song_vectors('user_000002')

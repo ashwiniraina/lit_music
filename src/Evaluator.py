@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 class Evaluator:
-	
-	# input arguments are dictionaries which maps user_id to list of lists. 
+
+	# input arguments are dictionaries which maps user_id to list of lists.
 	# list of lists is the top-n recommendation for each test song
 	def precision(self, actual_rec_dict, predicted_rec_dict):
 		total_precision_sum = 0.0
@@ -35,8 +35,8 @@ class Evaluator:
 				#tempList = [5120, 4477, 3234, 1833, 4544, 1773, 3981, 1326, 1788, 2552]
 
 				for song_id_int in test_song_predicted_rec_list:
-				#for song_id_int in tempList:	
-					if song_id_int != user_actual_rec_list[i][0]: 
+				#for song_id_int in tempList:
+					if song_id_int != user_actual_rec_list[i][0]:
 						if song_id_int in test_song_actual_rec_list:
 							num_matches += 1.0
 						effective_len += 1.0
@@ -52,7 +52,7 @@ class Evaluator:
 			total_precision_sum += user_precision_sum/num_test_songs
 		print ("total precision@10 = ", total_precision_sum/num_users)
 
-	# input arguments are dictionaries which maps user_id to list of lists. 
+	# input arguments are dictionaries which maps user_id to list of lists.
 	# list of lists is the top-n recommendation for each test song
 	def map(self, actual_rec_dict, predicted_rec_dict):
 		total_map_sum = 0.0
@@ -80,7 +80,7 @@ class Evaluator:
 
 				print (test_song_actual_rec_list, test_song_predicted_rec_list, precision)
 				print ("song map = ", sum(precision)/num_matches)
-				
+
 				user_map_sum += sum(precision)/num_matches
 
 			print ("user "+user_id+" map = ", user_map_sum/num_test_songs)
@@ -89,9 +89,9 @@ class Evaluator:
 
 	def run(self):
 		actual_rec_dict = np.load('../datasets/lastfm-dataset-1K/extracts/top10actual.npy').item()
-		#predicted_rec_dict = np.load('../datasets/lastfm-dataset-1K/extracts/top10predictions.npy').item()
-		predicted_rec_dict = np.load('../datasets/lastfm-dataset-1K/extracts/top10bmfpredictions.npy').item()
+		predicted_rec_dict = np.load('../datasets/lastfm-dataset-1K/extracts/top10predictions_user_000002.npy').item()
+		# predicted_rec_dict = np.load('../datasets/lastfm-dataset-1K/extracts/top10bmfpredictions.npy').item()
+		# predicted_rec_dict = np.load('../datasets/lastfm-dataset-1K/extracts/top10_s2v_predictions_user_000002.npy').item()
 
 		self.precision(actual_rec_dict, predicted_rec_dict)
 		#self.map(actual_rec_dict, predicted_rec_dict)
-
