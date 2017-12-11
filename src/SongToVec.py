@@ -85,8 +85,8 @@ class SongToVec:
 				if user_id == 'user_000002':
 					sessions = self.read_combined_sessions_minus_test_songs(user_id)
 					model = self.run_word2vec_model(sessions)
-					self.generate_song_vectors(model, 'combined_song_vectors')
-					self.find_knn_for_song_vectors(self.constants.NUM_NEAREST_NEIGHBORS, 'combined_knn_song_sim_matrix')
+					self.generate_song_vectors(model, 'combined_song_vectors_'+str(user_id))
+					self.find_knn_for_song_vectors(self.constants.NUM_NEAREST_NEIGHBORS, 'combined_knn_song_sim_matrix_'+str(user_id))
 		elif mode == self.constants.RUN_SONG2VEC_ON_USER_TRAINING_SONGS:
 			for user_id in user_db:
 				if user_id == 'user_000002':
@@ -165,7 +165,8 @@ class SongToVec:
 			print ("Length of song vectors =",len(self.song_vectors))
 			song_id_ints = list(self.song_vectors.keys())
 			for song_id_int_row in song_id_ints:
-				print ("Writing row ",i," of song similarity matrix to file ")
+				if i%100 == 0:
+					print ("Writing row ",i," of song similarity matrix to file ")
 				write_str = ""
 				for j in range(i,len(song_id_ints)):
 					song_id_int_col = song_id_ints[j]

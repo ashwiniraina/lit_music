@@ -104,6 +104,23 @@ class TrainTestSetGen:
 		else:
 			return False
 
+	def create_training_sessions_without_split_on_test_song(self, user_id, song_id_int, session_song_id_ints):
+
+		curr_index = 0
+		song_present = False
+		while curr_index < len(session_song_id_ints):
+			if song_id_int == session_song_id_ints[curr_index]:
+				song_present = True
+				session_song_id_ints.remove(song_id_int)
+			else:
+				curr_index += 1
+
+		if song_present == True:
+			self.add_session(user_id, session_song_id_ints)
+			return True
+		else:
+			return False
+
 	def validate_and_write_training_sessions(self):
 		for user_id in self.test_songs:
 			#test_set_songs = self.test_songs[user_id]
@@ -113,11 +130,17 @@ class TrainTestSetGen:
 				# make sure none of the test set songs are in training sessions
 				session_idx = 0
 				for session in training_set_sessions:
+					song_count = 0
 					for song_id_int in session:
 						if song_id_int in self.test_songs[user_id]:
 							print ("error: found ",song_id_int," session idx ",session_idx," session ",session," in test_set_songs")
 							return False
-						training_sessions_file.write(str(song_id_int)+",")
+						song_count += 1
+						if song_count == len(session):
+							training_sessions_file.write(str(song_id_int))
+						else:
+							training_sessions_file.write(str(song_id_int)+",")
+						
 					training_sessions_file.write("\n")
 					session_idx += 1
 
@@ -185,10 +208,12 @@ class TrainTestSetGen:
 			#print ("Session songs ", [x[1].song_id_int for x in session])
 			first_test_song = True
 			add_index = self.add_session(user_id, [x[1].song_id_int for x in session])
+			#breakloop = False
 			for song_id_int in self.test_songs[user_id]:
 				#print ("Removing song id int ", song_id_int," from the session, start_index=",start_index)
 				if first_test_song:
-					del_orig_session = self.create_training_sessions(user_id, song_id_int, self.training_sessions[user_id][add_index])
+					#del_orig_session = self.create_training_sessions(user_id, song_id_int, self.training_sessions[user_id][add_index])
+					del_orig_session = self.create_training_sessions_without_split_on_test_song(user_id, song_id_int, self.training_sessions[user_id][add_index])
 					if (del_orig_session==True):
 						self.del_session(user_id, add_index)
 						first_test_song = False
@@ -196,13 +221,17 @@ class TrainTestSetGen:
 				else:
 					idx = start_index
 					for split_session in self.training_sessions[user_id][start_index:]:
-						del_orig_session = self.create_training_sessions(user_id, song_id_int, split_session)
+						#del_orig_session = self.create_training_sessions(user_id, song_id_int, split_session)
+						del_orig_session = self.create_training_sessions_without_split_on_test_song(user_id, song_id_int, split_session)
 						if (del_orig_session==True):
 							self.del_session(user_id, idx)
 							#print ("Split sessions ", self.training_sessions[user_id])
+							#breakloop = True
 						else:
 							idx += 1
 				#print ("Split sessions final", self.training_sessions[user_id])
+				# if breakloop == True:
+				# 	abd
 			start_index = len(self.training_sessions[user_id])
 
 			if self.validate_and_write_training_sessions() != True:
@@ -213,9 +242,9 @@ class TrainTestSetGen:
 
 		random.seed(9001)
 
-		executor = concurrent.futures.ProcessPoolExecutor(8)
-		futures = [executor.submit(self.gen_user_train_test_sets, user_db, song_db, user_id) for user_id in user_db]
-		concurrent.futures.wait(futures)
+		# executor = concurrent.futures.ProcessPoolExecutor(8)
+		# futures = [executor.submit(self.gen_user_train_test_sets, user_db, song_db, user_id) for user_id in user_db]
+		# concurrent.futures.wait(futures)
 
 		# loop = 0
 		# for user_id in user_db:
@@ -224,8 +253,9 @@ class TrainTestSetGen:
 		# 	if loop==3:
 		# 		break
 
-		#self.validate_training_sessions()
-		#self.print_session_stats(self.training_session_stats)
+		self.gen_user_train_test_sets(user_db, song_db, 'user_000002')
+		self.validate_training_sessions()
+		self.print_session_stats(self.training_session_stats)
 
 		
 
