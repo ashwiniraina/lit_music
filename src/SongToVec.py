@@ -1,4 +1,5 @@
 from gensim.models import word2vec
+from glove import Corpus, Glove
 import logging
 import glob
 import numpy as np
@@ -110,7 +111,7 @@ class SongToVec:
 
 		# train the skip-gram model; default window=5
 
-		model = word2vec.Word2Vec(sessions, size=30, window=5, min_count=1, workers=4)
+		model = word2vec.Word2Vec(sessions, size=30, window=5, min_count=1, workers=4, sg=1)
 
 		# # pickle the entire model to disk, so we can load&resume training later
 		# model.save('../datasets/lastfm-dataset-1K/extracts/song2vec.model')
@@ -121,6 +122,14 @@ class SongToVec:
 		# model = word2vec.Word2Vec.load_word2vec_format('../datasets/lastfm-dataset-1K/extracts/song2vec.model.bin', binary=True)
 
 		return model
+        # def run_glove_model(self, sessions):
+        #         corpus = Corpus()
+        #         corpus.fit(sessions, window=5)
+        #         model = Glove(no_components=30, learning_rate=0.05)
+        #         model.fit(corpus.matrix, epochs=30, no_threads=4, verbose=True)
+        #         # model.add_dictionary(corpus.dictionary)
+        #         return model
+
 
 	def generate_song_vectors(self, model, filename):
 		with open('../datasets/lastfm-dataset-1K/extracts/'+filename, 'w') as song_vectors_file:
