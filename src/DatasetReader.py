@@ -335,12 +335,13 @@ class DatasetReader:
 		return coo_matrix((data, (rows,cols)))
 
 	def get_user_train_sessions(self, user_id):
-		filename = '../datasets/lastfm-dataset-1K/extracts/training_sessions_' + user_id
+		filename = '../datasets/lastfm-dataset-1K/extracts/training_sessions_'+user_id
 		sessions = []
 		with open(filename) as f:
 			for line in f:
 			     # print(line.strip('\n').split(','))
-			     sessions.append([int(x) for x in line.strip('\n').split(',')])
+			     if line.strip('\n'):
+			     	sessions.append([int(x) for x in line.strip('\n').split(',')])
 		return sessions
 
 	def get_avg_hop_distance(self, train_sessions):
