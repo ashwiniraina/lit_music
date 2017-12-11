@@ -78,6 +78,7 @@ def transform_song_vectors(user_id, method):
     arg_sorted_ids = np.argsort(song_ids)
     song_features = song_features[arg_sorted_ids,1:] # sort songs by song id, and remove id column
     song_features = song_features[user_song_ids,:]
+
     W = np.ones((len(user_song_ids), len(user_song_ids))) * -1
     W[a,b] = 1
     # W[c,d] = 0
@@ -103,6 +104,7 @@ def transform_song_vectors(user_id, method):
         if 'LSML' in method:
             model = LSML(verbose=True)
         elif 'ITML' in method:
+
             model = ITML(verbose=True)
         min_len = min(len(a), len(c))
         print(min_len)
@@ -114,6 +116,7 @@ def transform_song_vectors(user_id, method):
     else:
         constraints = (np.array(a),np.array(b),np.array(c),np.array(d))
         transformed_songs = model.fit_transform(song_features, constraints)
+
     # np.save('song_features', song_features)
     np.save('../datasets/lastfm-dataset-1K/extracts/transformed_songs_vectors_'+str(user_id), transformed_songs)
     mapping_list = np.array([[orig_id,user_id] for orig_id, user_id in mapping.items()])
