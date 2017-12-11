@@ -238,7 +238,7 @@ class TrainTestSetGen:
 				break
 		self.print_user_session_stats(user_id, self.training_session_stats)
 
-	def split_data_into_train_test_sets(self, user_db, song_db):
+	def split_data_into_train_test_sets(self, user_db, song_db, user_id):
 
 		random.seed(9001)
 
@@ -253,8 +253,8 @@ class TrainTestSetGen:
 		# 	if loop==3:
 		# 		break
 
-		self.gen_user_train_test_sets(user_db, song_db, 'user_000002')
-		self.validate_training_sessions()
+		self.gen_user_train_test_sets(user_db, song_db, user_id)
+		#self.validate_training_sessions()
 		self.print_session_stats(self.training_session_stats)
 
 		

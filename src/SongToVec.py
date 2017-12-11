@@ -1,5 +1,5 @@
 from gensim.models import word2vec
-from glove import Corpus, Glove
+#from glove import Corpus, Glove
 import logging
 import glob
 import numpy as np
@@ -95,7 +95,7 @@ class SongToVec:
 					self.generate_song_vectors(model, 'ind_song_vectors_'+str(user_id))
 					self.generate_full_similarity_matrix('ind_full_song_sim_matrix_'+str(user_id))
 					#self.find_knn_for_song_vectors(self.constants.NUM_NEAREST_NEIGHBORS, 'ind_knn_song_sim_matrix_'+str(user_id))
-					self.transform_song_vectors(user_id)
+					#self.transform_song_vectors(user_id)
 		elif mode == self.constants.RUN_SONG2VEC_ON_ALL_USER_SONGS:
 			for user_id in user_db:
 				if user_id == 'user_000002':
@@ -139,7 +139,7 @@ class SongToVec:
 				self.song_vectors_int_ids.append(song_id_int)
 				#print ("song :",song_id_int," vector: ",self.song_vectors[song_id_int])
 				# song_vectors_file.write(str(song_id_int)+","+str(self.song_vectors[song_id_int])+"\n")
-				song_vectors_file.write(str(song_id_int)+" "+' '.join([str(x) for x in self.song_vectors[song_id_int])+"\n")
+				song_vectors_file.write(str(song_id_int)+" "+' '.join([str(x) for x in self.song_vectors[song_id_int]])+"\n")
 
 	def find_knn_for_song_vectors(self, k, filename):
 		nbrs = NearestNeighbors(k, algorithm='auto').fit(self.song_vectors_array)

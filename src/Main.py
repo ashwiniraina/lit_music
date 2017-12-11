@@ -7,9 +7,13 @@ from SongToVec import SongToVec
 from TrainTestSetGen import TrainTestSetGen
 from scipy.sparse import save_npz
 from Evaluator import Evaluator
+from transform_song_vectors import transform_song_vectors
+from get_user_item_rating import generate_train_test_set_for_librec
 
 # from UserNN import UserNN
 import matplotlib.pyplot as plt
+
+user_id_list = ['user_000002', 'user_000691', 'user_000345', 'user_000861', 'user_000774', 'user_000882', 'user_000577', 'user_000910', 'user_000031', 'user_000249', 'user_000149']
 
 constants = Constants()
 
@@ -19,28 +23,34 @@ dataset_reader = DatasetReader()
 # print ("User db len=",len(user_db), " Song db len=", len(song_db))
 
 # load the pre-processed map files
-# (user_db, song_db) = dataset_reader.read(constants.MAPS_LASTFM_1K);
-# print ("User db len=",len(user_db), " Song db len=",len(song_db))
+(user_db, song_db) = dataset_reader.read(constants.MAPS_LASTFM_1K);
+print ("User db len=",len(user_db), " Song db len=",len(song_db))
 
-# dataset_reader.get_ratings_matrix(user_db, song_db)
-# m = dataset_reader.get_transition_probabilities(user_db, song_db, "user_000002")
-# save_npz('../datasets/lastfm-dataset-1K/extracts/transition_probs_user_000002', m)
+# for user_id, user_obj in user_db.items():
+# 	print ("User id : ",user_id, " num songs : ", user_obj.get_num_unique_songs())
 
-# train_sessions = dataset_reader.get_user_train_sessions('user_000002')
-# dataset_reader.save_hop_distances(user_db, ['user_000002'])
 
-# get training sessions for users
 
-# dataset_reader.save_hop_distances() -- uncomment
+dataset_reader.get_ratings_matrix(user_db, song_db)
 
-# for each user
-  # generate combined song vectors -- combined_song_vectors_userid
+for user_id in user_id_list[1:2]:
+	train_test_set_gen = TrainTestSetGen()
+	train_test_set_gen.split_data_into_train_test_sets(user_db, song_db, user_id)
 
-# for each user
-#   generate_bmf_files -- qdata_userid, bmf_item_mapping_userid
+	dataset_reader.save_hop_distances(user_db, [user_id])
 
-# for each user
-#  transform_song_vectors(user_id)
+
+	# m = dataset_reader.get_transition_probabilities(user_db, song_db, user_id)
+	# save_npz('../datasets/lastfm-dataset-1K/extracts/transition_probs_'+user_id, m)
+
+	# # run the SongToVec model on combined song sequences for all users
+	song_to_vec_comb = SongToVec()
+	song_to_vec_comb.run(user_db, song_db, user_id, constants.RUN_SONG2VEC_ON_ALL_SONGS)
+
+	transform_song_vectors(user_id, 'MMC')
+
+	generate_train_test_set_for_librec(user_id)
+
 
 # for each user
 #  get_actual_predicted_songs(user_id):
@@ -68,9 +78,6 @@ dataset_reader = DatasetReader()
 # print (user_db['user_000002'].get_num_unique_songs())
 
 
-# train_test_set_gen = TrainTestSetGen()
-# train_test_set_gen.split_data_into_train_test_sets(user_db, song_db)
-
 # run the SongToVec model on combined song sequences for all users
 # song_to_vec_comb = SongToVec()
 # song_to_vec_comb.run(user_db, song_db, constants.RUN_SONG2VEC_ON_ALL_SONGS)
@@ -89,5 +96,5 @@ dataset_reader = DatasetReader()
 
 # EVALUATION
 
-evaluator = Evaluator()
-evaluator.run()
+# evaluator = Evaluator()
+# evaluator.run()
