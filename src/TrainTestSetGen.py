@@ -130,6 +130,8 @@ class TrainTestSetGen:
 				# make sure none of the test set songs are in training sessions
 				session_idx = 0
 				for session in training_set_sessions:
+					if len(session) == 0:
+						continue
 					song_count = 0
 					for song_id_int in session:
 						if song_id_int in self.test_songs[user_id]:

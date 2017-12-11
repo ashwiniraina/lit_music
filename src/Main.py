@@ -14,17 +14,17 @@ from get_ratings import get_accuracy
 # from UserNN import UserNN
 import matplotlib.pyplot as plt
 
-user_id_list = ['user_000002', 'user_000691', 'user_000345', 'user_000861', 'user_000774', 'user_000882', 'user_000577', 'user_000910', 'user_000031', 'user_000249', 'user_000149']
+user_id_list = ['user_000002', 'user_000345', 'user_000861', 'user_000774', 'user_000882', 'user_000577', 'user_000910', 'user_000031', 'user_000249', 'user_000149']
 
 constants = Constants()
 
 # read the lastfm-1K dataset
 dataset_reader = DatasetReader()
-(user_db, song_db) = dataset_reader.read(constants.DATASET_LASTFM_1K);
+# (user_db, song_db) = dataset_reader.read(constants.DATASET_LASTFM_1K);
 # print ("User db len=",len(user_db), " Song db len=", len(song_db))
 
 # load the pre-processed map files
-# (user_db, song_db) = dataset_reader.read(constants.MAPS_LASTFM_1K);
+(user_db, song_db) = dataset_reader.read(constants.MAPS_LASTFM_1K);
 print ("User db len=",len(user_db), " Song db len=",len(song_db))
 
 # for user_id, user_obj in user_db.items():
@@ -32,9 +32,9 @@ print ("User db len=",len(user_db), " Song db len=",len(song_db))
 
 
 
-dataset_reader.get_ratings_matrix(user_db, song_db)
+# dataset_reader.get_ratings_matrix(user_db, song_db)
 # total_precision, total_precision_wrmf = 0,0
-user_ids = user_id_list[1:2]
+user_ids = user_id_list
 for user_id in user_ids:
 	train_test_set_gen = TrainTestSetGen()
 	train_test_set_gen.split_data_into_train_test_sets(user_db, song_db, user_id)
@@ -54,7 +54,8 @@ for user_id in user_ids:
 
 	generate_train_test_set_for_librec(user_id)
 
-precision, precision_wrmf = get_accuracy(user_ids, use_transformed_songs=True, use_wrmf=False)
+
+precision, precision_wrmf = get_accuracy(user_ids, use_transformed_songs=False, use_wrmf=False)
 
 # for each user
 #  get_actual_predicted_songs(user_id):

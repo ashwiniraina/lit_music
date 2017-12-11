@@ -174,6 +174,7 @@ class DatasetReader:
 		print ("Total play sessions=",total_play_sessions," Total play session songs=",total_play_session_songs," Avg len of play sessions=",float(total_play_session_songs)/total_play_sessions)
 
 		# write the user_db and song_db to files
+		song_db = {key:val for key,val in song_db.items() if val.song_id_int != -1}
 		self.write_map_objects_to_files(user_db, song_db)
 
 		# write the play sessions files
@@ -299,6 +300,8 @@ class DatasetReader:
 			user_id_int = int(user_id[5:])
 
 			for song_id, count in user_obj.songs.items():
+				if song_id not in song_db:
+					continue
 				song_id_int = int(song_db[song_id].song_id_int)
 				# normalized count
 				rating = np.log(float(count)/float(user_obj.num_songs_played) + 1)

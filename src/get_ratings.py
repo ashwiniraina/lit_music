@@ -13,11 +13,11 @@ def get_wrmf_predictions(user_id):
                    delimiter=',')
     p = np.loadtxt('../datasets/lastfm-dataset-1K/extracts/pdata_' + user_id + '.txt',
                    delimiter=',')
-    train_songs = np.loadtxt('../datasets/lastfm-dataset-1K/extracts/train_songs_' + user_id +
-                             '.txt', dtype=np.int, delimiter=',')
+    train_songs = np.loadtxt('../datasets/lastfm-dataset-1K/extracts/train_songs_' + user_id,
+                             dtype=np.int, delimiter=',')
 
     mapping = np.loadtxt('../datasets/lastfm-dataset-1K/extracts/wrmf_item_mapping_' +
-                              user_id + '.txt', dtype=np.int)
+                         user_id + '.txt', dtype=np.int)
     mapping = {orig_id:wrmf_id for orig_id,wrmf_id in mapping}
     inv_mapping = {wrmf_id:orig_id for orig_id,wrmf_id in mapping.items()}
     user_idx = int(user_id.split('_')[1]) - 1 # because ids start with 1
@@ -41,8 +41,8 @@ def get_wrmf_predictions(user_id):
 def get_actual_predicted_songs(user_id, use_transformed_songs=True, save_lists=False):
     test_songs = set(np.loadtxt('../datasets/lastfm-dataset-1K/extracts/test_songs_' +
                                 str(user_id),dtype=np.int))
-    train_songs = np.loadtxt('../datasets/lastfm-dataset-1K/extracts/train_songs_' + user_id +
-                             '.txt', dtype=np.int, delimiter=',')
+    train_songs = np.loadtxt('../datasets/lastfm-dataset-1K/extracts/train_songs_' + user_id,
+                             dtype=np.int, delimiter=',')
 
     if use_transformed_songs:
         x = np.load('../datasets/lastfm-dataset-1K/extracts/transformed_songs_vectors_' +
@@ -63,7 +63,7 @@ def get_actual_predicted_songs(user_id, use_transformed_songs=True, save_lists=F
     ratings_mat = load_npz('../datasets/lastfm-dataset-1K/extracts/rating_mat.npz')
 
     n = 10
-    mapping = np.load('../datasets/lastfm-dataset-1K/extracts/song_mapping' + user_id + '.npy')
+    mapping = np.load('../datasets/lastfm-dataset-1K/extracts/song_mapping_' + user_id + '.npy')
     mapping = {orig_id: user_id for orig_id,user_id in mapping}
     inv_mapping = {user_id: orig_id for orig_id,user_id in mapping.items()}
     user_idx = int(user_id.split('_')[1]) - 1 # because ids start with 1

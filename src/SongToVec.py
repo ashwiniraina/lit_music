@@ -110,12 +110,12 @@ class SongToVec:
 	def run_word2vec_model(self, sessions):
 
 		# train the skip-gram model; default window=5
-		songs = set([int(song) for session in sessions for song in session])
-		diff = set(list(range(79239))) - songs
-		print(len(diff))
-		print(diff)
+		# songs = set([int(song) for session in sessions for song in session])
+		# diff = set(list(range(79239))) - songs
+		# print(len(diff))
+		# print(diff)
 		# print(len())
-		abd
+		# abd
 		model = word2vec.Word2Vec(sessions, size=30, window=5, min_count=1, workers=4, sg=1)
 
 		# # pickle the entire model to disk, so we can load&resume training later
