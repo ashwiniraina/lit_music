@@ -138,7 +138,8 @@ class SongToVec:
 				self.song_vectors_array.append(self.song_vectors[song_id_int])
 				self.song_vectors_int_ids.append(song_id_int)
 				#print ("song :",song_id_int," vector: ",self.song_vectors[song_id_int])
-				song_vectors_file.write(str(song_id_int)+","+str(self.song_vectors[song_id_int])+"\n")
+				# song_vectors_file.write(str(song_id_int)+","+str(self.song_vectors[song_id_int])+"\n")
+				song_vectors_file.write(str(song_id_int)+" "+' '.join([str(x) for x in self.song_vectors[song_id_int])+"\n")
 
 	def find_knn_for_song_vectors(self, k, filename):
 		nbrs = NearestNeighbors(k, algorithm='auto').fit(self.song_vectors_array)
