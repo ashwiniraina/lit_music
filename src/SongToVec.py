@@ -84,8 +84,8 @@ class SongToVec:
 				if user_id == 'user_000002':
 					sessions = self.read_combined_sessions_minus_test_songs(user_id)
 					model = self.run_word2vec_model(sessions)
-					self.generate_song_vectors(model, 'combined_song_vectors')
-					self.find_knn_for_song_vectors(self.constants.NUM_NEAREST_NEIGHBORS, 'combined_knn_song_sim_matrix')
+					self.generate_song_vectors(model, 'combined_song_vectors_'+str(user_id))
+					self.find_knn_for_song_vectors(self.constants.NUM_NEAREST_NEIGHBORS, 'combined_knn_song_sim_matrix_'+str(user_id))
 		elif mode == self.constants.RUN_SONG2VEC_ON_USER_TRAINING_SONGS:
 			for user_id in user_db:
 				if user_id == 'user_000002':
@@ -155,7 +155,8 @@ class SongToVec:
 			print ("Length of song vectors =",len(self.song_vectors))
 			song_id_ints = list(self.song_vectors.keys())
 			for song_id_int_row in song_id_ints:
-				print ("Writing row ",i," of song similarity matrix to file ")
+				if i%100 == 0:
+					print ("Writing row ",i," of song similarity matrix to file ")
 				write_str = ""
 				for j in range(i,len(song_id_ints)):
 					song_id_int_col = song_id_ints[j]
@@ -168,39 +169,83 @@ class SongToVec:
 		mat = song_pairs[idxs]
 		return (mat[:,0], mat[:,1])
 
+	# def transform_song_vectors(self, user_id):
+
+	# 	# read user similarity matrix
+	# 	user_sim = np.loadtxt('../datasets/lastfm-dataset-1K/extracts/ind_full_song_sim_matrix_'+str(user_id), delimiter=',', usecols=2)
+	# 	# plt.hist(user_sim)
+	# 	# plt.show()
+	# 	# user_sim[i] is the similarity of the songs in song_pairs[i]
+	# 	song_pairs = np.loadtxt('../datasets/lastfm-dataset-1K/extracts/ind_full_song_sim_matrix_'+str(user_id), delimiter=',', usecols=[0,1], dtype=np.int)
+
+	# 	# songs that have a similarity value within the 10th percentile of
+	# 	# similarity values are considered similar.
+	# 	sim_cut_off = len(user_sim) - int(len(user_sim)/10)
+	# 	sim_songs_idxs = np.argpartition(user_sim, sim_cut_off)
+	# 	# a[i] and b[i] are similar songs
+	# 	a,b = self.get_song_pairs(sim_songs_idxs[sim_cut_off:], song_pairs)
+
+	# 	# songs with similarity values greater than the 90th percentile are
+	# 	# considered dissimilar.
+	# 	dissim_cut_off = int(len(user_sim)/10)
+	# 	dissim_songs_idxs = np.argpartition(user_sim, dissim_cut_off)
+	# 	# c[i] and d[i] are dissimilar songs.
+	# 	c,d = self.get_song_pairs(dissim_songs_idxs[:dissim_cut_off], song_pairs)
+
+	# 	# read song features
+	# 	song_features = np.loadtxt('../datasets/lastfm-dataset-1K/extracts/combined_song_vectors_'+str(user_id))
+	# 	song_ids = song_features[:,0].astype(np.int)
+	# 	arg_sorted_ids = np.argsort(song_ids)
+	# 	song_features = song_features[arg_sorted_ids,1:]
+	# 	mmc = MMC(max_iter=1000)
+	# 	constraints = (np.array(a),np.array(b),np.array(c),np.array(d))
+	# 	transformed_songs = mmc.fit_transform(song_features, constraints)
+	# 	# np.save('song_features', song_features)
+	# 	np.save('../datasets/lastfm-dataset-1K/extracts/transformed_songs_vectors_'+str(user_id), transformed_songs)
+
+	def apply_mapping(song_ids):
+		return [mapping[song_id] for song_id in song_ids]
+
 	def transform_song_vectors(self, user_id):
-
 		# read user similarity matrix
-		user_sim = np.loadtxt('../datasets/lastfm-dataset-1K/extracts/ind_full_song_sim_matrix_'+str(user_id), delimiter=',', usecols=2)
-		# plt.hist(user_sim)
-		# plt.show()
-		# user_sim[i] is the similarity of the songs in song_pairs[i]
-		song_pairs = np.loadtxt('../datasets/lastfm-dataset-1K/extracts/ind_full_song_sim_matrix_'+str(user_id), delimiter=',', usecols=[0,1], dtype=np.int)
+		user_sim = np.load('../datasets/lastfm-dataset-1K/extracts/avg_hop_dist_'+str(user_id) + ".npy").item()
 
-		# songs that have a similarity value within the 10th percentile of
-		# similarity values are considered similar.
-		sim_cut_off = len(user_sim) - int(len(user_sim)/10)
-		sim_songs_idxs = np.argpartition(user_sim, sim_cut_off)
-		# a[i] and b[i] are similar songs
-		a,b = self.get_song_pairs(sim_songs_idxs[sim_cut_off:], song_pairs)
+		# file created using tr
+		train_songs = set(np.loadtxt('../datasets/lastfm-dataset-1K/extracts/train_songs_'+str(user_id), delimiter=',', dtype=np.int))
 
-		# songs with similarity values greater than the 90th percentile are
-		# considered dissimilar.
-		dissim_cut_off = int(len(user_sim)/10)
-		dissim_songs_idxs = np.argpartition(user_sim, dissim_cut_off)
-		# c[i] and d[i] are dissimilar songs.
-		c,d = self.get_song_pairs(dissim_songs_idxs[:dissim_cut_off], song_pairs)
+		test_songs = set(np.loadtxt('../datasets/lastfm-dataset-1K/extracts/test_songs_'+str(user_id),dtype=np.int))
+		user_song_ids = list(sorted(train_songs | test_songs))
+		print(len(user_song_ids))
+		mapping = {}
+		inv_mapping = {}
+		curr_id = 0
+		for song_id in user_song_ids:
+			mapping[song_id] = curr_id
+			inv_mapping[curr_id] = song_id
+			curr_id += 1
 
+		a,b,c,d = [],[],[],[]
+		for ((s1,s2), dist) in user_sim.items():
+			if dist <= Constants.SIM_THRESHOLD_FOR_HOP_DIST:
+				a.append(mapping[s1])
+				b.append(mapping[s2])
+			elif dist >= Constants.DISSIM_THRESHOLD_FOR_HOP_DIST:
+				c.append(mapping[s1])
+				d.append(mapping[s2])
+
+		print(len(c),len(d),len(a),len(b))
 		# read song features
-		song_features = np.loadtxt('../datasets/lastfm-dataset-1K/extracts/combined_song_vectors')
+		song_features = np.loadtxt('../datasets/lastfm-dataset-1K/extracts/combined_song_vectors_'+str(user_id))
 		song_ids = song_features[:,0].astype(np.int)
 		arg_sorted_ids = np.argsort(song_ids)
-		song_features = song_features[arg_sorted_ids,1:]
-		mmc = MMC(max_iter=1000)
+		song_features = song_features[arg_sorted_ids,1:] # sort songs by song id, and remove id column
+		song_features = song_features[user_song_ids,:]
+		mmc = MMC(max_iter=10000)
 		constraints = (np.array(a),np.array(b),np.array(c),np.array(d))
 		transformed_songs = mmc.fit_transform(song_features, constraints)
 		# np.save('song_features', song_features)
 		np.save('../datasets/lastfm-dataset-1K/extracts/transformed_songs_vectors_'+str(user_id), transformed_songs)
-
+		mapping_list = np.array([[orig_id,user_id] for orig_id, user_id in mapping.items()])
+		np.save('../datasets/lastfm-dataset-1K/extracts/song_mapping_'+str(user_id), mapping_list)
 
 
