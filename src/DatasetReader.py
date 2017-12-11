@@ -1,6 +1,7 @@
 from Constants import Constants
 from Song import Song
 from User import User
+from collections import defaultdict
 import json
 import datetime as dt
 import pickle
@@ -312,3 +313,69 @@ class DatasetReader:
 		# print(diags(1/max_song_rating).shape)
 		ratings_mat = ratings_mat.dot(diags(1/max_song_rating)) * 5
 		save_npz('../datasets/lastfm-dataset-1K/extracts/rating_mat', ratings_mat)
+
+	def get_transition_probabilities(self, user_db, song_db, user_id):
+		user = user_db[user_id]
+		sessions = user.play_sessions.sessions
+		pair_counts = defaultdict(int)
+		song_counts = defaultdict(int)
+		for session in sessions:
+			for e1,e2 in zip(session[:-1], session[1:]):
+				s1,s2 = e1[1], e2[1]
+				s1_id, s2_id = s1.song_id_int, s2.song_id_int
+				song_counts[s1_id] += 1
+				pair_counts[s1_id, s2_id] += 1
+		data,rows,cols = [],[],[]
+
+		for ((s1,s2),count) in pair_counts.items():
+			data.append(count/song_counts[s1])
+			rows.append(s1)
+			cols.append(s2)
+
+		return coo_matrix((data, (rows,cols)))
+
+	def get_user_train_sessions(self, user_id):
+		filename = '../datasets/lastfm-dataset-1K/extracts/training_sessions_' + user_id
+		sessions = []
+		with open(filename) as f:
+			for line in f:
+			     # print(line.strip('\n').split(','))
+			     sessions.append([int(x) for x in line.strip('\n').split(',')])
+		return sessions
+
+	def get_avg_hop_distance(self, train_sessions):
+		sessions = train_sessions
+		pair_counts = defaultdict(int)
+		song_counts = defaultdict(int)
+		hop_dist = defaultdict(int)
+		for session in sessions:
+			for i in range(len(session)):
+				s1_id = session[i]
+				for j in range(i+1, len(session)):
+					s2_id = session[j]
+					hop_dist[(s1_id,s2_id)] += (j-i)
+					hop_dist[(s2_id,s1_id)] += (j-i)
+					pair_counts[(s1_id, s2_id)] += 1
+					pair_counts[(s2_id, s1_id)] += 1
+
+		for key in hop_dist.keys():
+			hop_dist[key] /= pair_counts[key]
+		return hop_dist
+        # np.save(hop_dist)
+	def save_hop_distances(self, user_db, user_ids=[]):
+		if not user_ids:
+			user_ids = [str(i) for i in range(1,1001)]
+			user_ids = ['user_' + '0' * (6 - len(user_id)) + user_id
+                                    for user_id in user_ids]
+		for user_id in user_ids:
+			train_sessions = self.get_user_train_sessions(user_id)
+			h = self.get_avg_hop_distance(train_sessions)
+			np.save('../datasets/lastfm-dataset-1K/extracts/avg_hop_dist_' + user_id, h)
+			play_sessions = user_db[user_id].play_sessions.sessions
+			train_test_sessions = []
+			for session in play_sessions:
+				train_test_sessions.append([t[1].song_id_int for t in session])
+
+			h2 = self.get_avg_hop_distance(train_test_sessions)
+			np.save('../datasets/lastfm-dataset-1K/extracts/avg_hop_dist_train_test_'
+				+ user_id ,h2)
