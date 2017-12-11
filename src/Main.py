@@ -1,11 +1,15 @@
 from DatasetReader import DatasetReader
+from collections import defaultdict
 from Constants import Constants
 import numpy as np
 #from scipy.sparse import csc_matrix
 from SongToVec import SongToVec
 from TrainTestSetGen import TrainTestSetGen
+from scipy.sparse import save_npz
 from Evaluator import Evaluator
+
 # from UserNN import UserNN
+import matplotlib.pyplot as plt
 
 constants = Constants()
 
@@ -19,7 +23,47 @@ dataset_reader = DatasetReader()
 # print ("User db len=",len(user_db), " Song db len=",len(song_db))
 
 # dataset_reader.get_ratings_matrix(user_db, song_db)
+# m = dataset_reader.get_transition_probabilities(user_db, song_db, "user_000002")
+# save_npz('../datasets/lastfm-dataset-1K/extracts/transition_probs_user_000002', m)
+
+
+
+dataset_reader.save_hop_distances()
+
+# for each user
+  # generate combined song vectors -- combined_song_vectors_userid
+
+# for each user
+#   generate_bmf_files -- qdata_userid, bmf_item_mapping_userid
+
+# for each user
+#  transform_song_vectors(user_id)
+
+# for each user
+#  get_actual_predicted_songs(user_id):
+
+
+# user_id = 'user_000002'
+# user = user_db[user_id]
+# sessions = user.play_sessions.sessions
+# p = defaultdict(int)
+# for session in sessions:
+#     for e1,e2 in zip(session[:-1], session[1:]):
+#         s1,s2 = e1[1], e2[1]
+#         s1, s2 = s1.song_id_int, s2.song_id_int
+#         p[s1, s2] += 1/user.songs[s1]
+#         data,rows,cols = [],[],[]
+
+#         for ((s1,s2),prob) in p.items():
+#             data.append(prob)
+#             rows.append(s1)
+#             cols.append(s2)
+
+# mat = coo_matrix((data, (rows,cols)))
+
+
 # print (user_db['user_000002'].get_num_unique_songs())
+
 
 # train_test_set_gen = TrainTestSetGen()
 # train_test_set_gen.split_data_into_train_test_sets(user_db, song_db)
@@ -43,5 +87,3 @@ dataset_reader = DatasetReader()
 # EVALUATION
 evaluator = Evaluator()
 evaluator.run()
-
-
