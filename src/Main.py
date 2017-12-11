@@ -9,6 +9,7 @@ from scipy.sparse import save_npz
 from Evaluator import Evaluator
 from transform_song_vectors import transform_song_vectors
 from get_user_item_rating import generate_train_test_set_for_librec
+from get_ratings import get_accuracy
 
 # from UserNN import UserNN
 import matplotlib.pyplot as plt
@@ -19,11 +20,11 @@ constants = Constants()
 
 # read the lastfm-1K dataset
 dataset_reader = DatasetReader()
-# (user_db, song_db) = dataset_reader.read(constants.DATASET_LASTFM_1K);
+(user_db, song_db) = dataset_reader.read(constants.DATASET_LASTFM_1K);
 # print ("User db len=",len(user_db), " Song db len=", len(song_db))
 
 # load the pre-processed map files
-(user_db, song_db) = dataset_reader.read(constants.MAPS_LASTFM_1K);
+# (user_db, song_db) = dataset_reader.read(constants.MAPS_LASTFM_1K);
 print ("User db len=",len(user_db), " Song db len=",len(song_db))
 
 # for user_id, user_obj in user_db.items():
@@ -32,25 +33,28 @@ print ("User db len=",len(user_db), " Song db len=",len(song_db))
 
 
 dataset_reader.get_ratings_matrix(user_db, song_db)
-
-for user_id in user_id_list[1:2]:
+# total_precision, total_precision_wrmf = 0,0
+user_ids = user_id_list[1:2]
+for user_id in user_ids:
 	train_test_set_gen = TrainTestSetGen()
 	train_test_set_gen.split_data_into_train_test_sets(user_db, song_db, user_id)
 
 	dataset_reader.save_hop_distances(user_db, [user_id])
 
 
-	# m = dataset_reader.get_transition_probabilities(user_db, song_db, user_id)
-	# save_npz('../datasets/lastfm-dataset-1K/extracts/transition_probs_'+user_id, m)
+	# # m = dataset_reader.get_transition_probabilities(user_db, song_db, user_id)
+	# # save_npz('../datasets/lastfm-dataset-1K/extracts/transition_probs_'+user_id, m)
 
-	# # run the SongToVec model on combined song sequences for all users
+	# # # run the SongToVec model on combined song sequences for all users
 	song_to_vec_comb = SongToVec()
 	song_to_vec_comb.run(user_db, song_db, user_id, constants.RUN_SONG2VEC_ON_ALL_SONGS)
 
 	transform_song_vectors(user_id, 'MMC')
 
+
 	generate_train_test_set_for_librec(user_id)
 
+precision, precision_wrmf = get_accuracy(user_ids, use_transformed_songs=True, use_wrmf=False)
 
 # for each user
 #  get_actual_predicted_songs(user_id):

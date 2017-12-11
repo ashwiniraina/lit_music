@@ -50,7 +50,7 @@ class SongToVec:
 
 		with open("../datasets/lastfm-dataset-1K/extracts/training_sessions_"+str(user_id), 'r') as training_file:
 			for session in training_file:
-				session_song_id_ints = session.strip("\n").split(",")[:-1] # last element is empty
+				session_song_id_ints = session.strip("\n").split(",")
 				sessions.append(session_song_id_ints)
 				for song_id_int in session_song_id_ints:
 					if song_id_int not in self.song_vectors:
@@ -62,7 +62,7 @@ class SongToVec:
 		# read the user play session files
 		with open("../datasets/lastfm-dataset-1K/extracts/training_sessions_"+str(user_id), 'r') as training_file:
 			for session in training_file:
-				session_song_id_ints = session.strip("\n").split(",")[:-1] # last element is empty
+				session_song_id_ints = session.strip("\n").split(",")
 				sessions.append(session_song_id_ints)
 				for song_id_int in session_song_id_ints:
 					if song_id_int not in self.song_vectors:
@@ -78,18 +78,18 @@ class SongToVec:
 		# 			self.song_vectors[song_id_int] = [] # empty list, will be filled with song vector in generate_song_vectors
 		return sessions
 
-	def run(self, user_db, song_db, mode):
+	def run(self, user_db, song_db, user_id_arg, mode):
 
 		if mode == self.constants.RUN_SONG2VEC_ON_ALL_SONGS:
 			for user_id in user_db:
-				if user_id == 'user_000002':
+				if user_id == user_id_arg:
 					sessions = self.read_combined_sessions_minus_test_songs(user_id)
 					model = self.run_word2vec_model(sessions)
 					self.generate_song_vectors(model, 'combined_song_vectors_'+str(user_id))
-					self.find_knn_for_song_vectors(self.constants.NUM_NEAREST_NEIGHBORS, 'combined_knn_song_sim_matrix_'+str(user_id))
+					# self.find_knn_for_song_vectors(self.constants.NUM_NEAREST_NEIGHBORS, 'combined_knn_song_sim_matrix_'+str(user_id))
 		elif mode == self.constants.RUN_SONG2VEC_ON_USER_TRAINING_SONGS:
 			for user_id in user_db:
-				if user_id == 'user_000002':
+				if user_id == user_id_arg:
 					sessions = self.read_individual_sessions(user_id, mode)
 					model = self.run_word2vec_model(sessions)
 					self.generate_song_vectors(model, 'ind_song_vectors_'+str(user_id))
@@ -98,7 +98,7 @@ class SongToVec:
 					#self.transform_song_vectors(user_id)
 		elif mode == self.constants.RUN_SONG2VEC_ON_ALL_USER_SONGS:
 			for user_id in user_db:
-				if user_id == 'user_000002':
+				if user_id == user_id_arg:
 					sessions = self.read_combined_sessions(user_id)
 					model = self.run_word2vec_model(sessions)
 					self.generate_song_vectors(model, 'ind_song_vectors_train_and_test_'+str(user_id))
@@ -110,7 +110,12 @@ class SongToVec:
 	def run_word2vec_model(self, sessions):
 
 		# train the skip-gram model; default window=5
-
+		songs = set([int(song) for session in sessions for song in session])
+		diff = set(list(range(79239))) - songs
+		print(len(diff))
+		print(diff)
+		# print(len())
+		abd
 		model = word2vec.Word2Vec(sessions, size=30, window=5, min_count=1, workers=4, sg=1)
 
 		# # pickle the entire model to disk, so we can load&resume training later

@@ -1,3 +1,4 @@
+# change globalMean
 import numpy as np
 from numpy.random import rand
 import timeit

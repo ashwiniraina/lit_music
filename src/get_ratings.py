@@ -101,18 +101,18 @@ def get_actual_predicted_songs(user_id, use_transformed_songs=True, save_lists=F
             np.save('../datasets/lastfm-dataset-1K/extracts/top10_s2v_ratings_' + user_id,
                     topn_predicted)
     # user_ratings = user_ratings
-    user_ratings[train_songs - 1] = 0 # because indices start with 0
+    user_ratings[train_songs] = 0 # because indices start with 0
 
     topn_actual_idxs = (np.argsort(user_ratings)[::-1][:n])
     # print(topn_actual_idxs)
     # print(user_ratings[topn_actual_idxs])
-    topn_actual = np.vstack([topn_actual_idxs+1, user_ratings[topn_actual_idxs]]).T
+    topn_actual = np.vstack([topn_actual_idxs, user_ratings[topn_actual_idxs]]).T
     if save_lists:
         np.save('../datasets/lastfm-dataset-1K/extracts/top10_actual_ratings_' + user_id,
                 topn_actual)
     return (topn_actual[:,0], topn_predicted[:,0])
 
-def get_accuracy(user_ids, use_transformed_songs=False):
+def get_accuracy(user_ids, use_transformed_songs=False, use_wrmf=False):
     if not user_ids:
         user_ids = [str(i) for i in range(1,1001)]
         user_ids = ['user_' + '0' * (6 - len(user_id)) + user_id
@@ -122,21 +122,24 @@ def get_accuracy(user_ids, use_transformed_songs=False):
     for user_id in user_ids:
         actual, predicted = get_actual_predicted_songs(user_id, use_transformed_songs,
                                                        save_lists=False)
-        wrmf_predicted = get_wrmf_predictions(user_id)
-        print('----actual----')
-        print(actual)
-        print('----predicted----')
-        print(predicted)
-        print('----wrmf------')
-        print(wrmf_predicted)
+        if use_wrmf:
+            wrmf_predicted = get_wrmf_predictions(user_id)
+            precision_wrmf += len(set(actual) & set(wrmf_predicted))/(actual.shape[0])
         precision += len(set(actual) & set(predicted))/(actual.shape[0])
-        precision_wrmf += len(set(actual) & set(wrmf_predicted))/(actual.shape[0])
+        # print('----actual----')
+        # print(actual)
+        # print('----predicted----')
+        # print(predicted)
+        # print('----wrmf------')
+        # print(wrmf_predicted)
     precision /= len(user_ids)
-    precision_wrmf /= len(user_ids)
     print(precision)
-    print(precision_wrmf)
+    if use_wrmf:
+        precision_wrmf /= len(user_ids)
+        print(precision_wrmf)
+    return (precision, precision_wrmf)
 
 
-# if __name__ == '__main__':
-get_accuracy(['user_000002'])
-get_accuracy(['user_000002'], use_transformed_songs=True)
+if __name__ == '__main__':
+    get_accuracy(['user_000002'])
+    get_accuracy(['user_000002'], use_transformed_songs=True)

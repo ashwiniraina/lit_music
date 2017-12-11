@@ -24,6 +24,7 @@ class Evaluator:
 				print ("test song id actual=",user_actual_rec_list[i][0]," test song id predicted=",user_predicted_rec_list[i][0])
 				if user_actual_rec_list[i][0] != user_predicted_rec_list[i][0]:
 					print ("actual and predicted test songs not same")
+					print(user_actual_rec_list[i][0], user_predicted_rec_list[i][0])
 					abd
 				if len(test_song_actual_rec_list) != len(test_song_predicted_rec_list):
 					print ("skipping")
@@ -88,10 +89,10 @@ class Evaluator:
 		print ("total map = ", total_map_sum/num_users)
 
 	def run(self):
-		actual_rec_dict = np.load('../datasets/lastfm-dataset-1K/extracts/top10actual.npy').item()
-		predicted_rec_dict = np.load('../datasets/lastfm-dataset-1K/extracts/top10predictions_user_000002.npy').item()
+		actual_rec_dict = np.load('../datasets/lastfm-dataset-1K/extracts/top10actual_user_000002.npy').item()
+		# predicted_rec_dict = np.load('../datasets/lastfm-dataset-1K/extracts/top10predictions_user_000002.npy').item()
 		# predicted_rec_dict = np.load('../datasets/lastfm-dataset-1K/extracts/top10bmfpredictions.npy').item()
-		# predicted_rec_dict = np.load('../datasets/lastfm-dataset-1K/extracts/top10_s2v_predictions_user_000002.npy').item()
+		predicted_rec_dict = np.load('../datasets/lastfm-dataset-1K/extracts/top10_s2v_predictions_user_000002.npy').item()
 
 		self.precision(actual_rec_dict, predicted_rec_dict)
 		#self.map(actual_rec_dict, predicted_rec_dict)

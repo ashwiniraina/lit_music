@@ -77,7 +77,7 @@ def transform_song_vectors(user_id, method):
     song_ids = song_features[:,0].astype(np.int)
     arg_sorted_ids = np.argsort(song_ids)
     song_features = song_features[arg_sorted_ids,1:] # sort songs by song id, and remove id column
-    song_features = song_features[user_song_ids,:]
+    song_features = song_features[user_song_ids, :]
 
     W = np.ones((len(user_song_ids), len(user_song_ids))) * -1
     W[a,b] = 1

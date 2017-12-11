@@ -140,7 +140,7 @@ class TrainTestSetGen:
 							training_sessions_file.write(str(song_id_int))
 						else:
 							training_sessions_file.write(str(song_id_int)+",")
-						
+
 					training_sessions_file.write("\n")
 					session_idx += 1
 
@@ -150,7 +150,7 @@ class TrainTestSetGen:
 		return True
 
 	def pick_test_songs_equidistantly(self, user_id, session_idx, session, num_songs_to_pick):
-		
+
 		step_count = math.floor(len(session)/(num_songs_to_pick+1))
 		#print ("Session #", session_idx," num songs in session ",len(session)," step count is ",step_count," num songs to pick = ",num_songs_to_pick)
 		#print ("Session songs ", session)
@@ -189,11 +189,11 @@ class TrainTestSetGen:
 			session_song_id_ints = [x[1].song_id_int for x in session]
 			#print (session_song_id_ints)
 			num_songs_to_pick = round(num_test_songs*len(session_song_id_ints)/user_db[user_id].play_sessions.get_total_sessions_songs())
-			
+
 			self.pick_test_songs_equidistantly(user_id, session_idx, session_song_id_ints, num_songs_to_pick)
 			#self.pick_test_songs_randomly(user_id, session_idx, session_song_id_ints, num_songs_to_pick)
 			session_idx += 1
-		
+
 		print ("Test set size=",len(self.test_songs[user_id]))
 		#print ("Test set size=",len(self.test_songs[user_id])," songs ", self.test_songs[user_id].keys())
 		self.print_user_session_stats(user_id, self.all_session_stats)
@@ -212,7 +212,7 @@ class TrainTestSetGen:
 			for song_id_int in self.test_songs[user_id]:
 				#print ("Removing song id int ", song_id_int," from the session, start_index=",start_index)
 				if first_test_song:
-					#del_orig_session = self.create_training_sessions(user_id, song_id_int, self.training_sessions[user_id][add_index])
+					# del_orig_session = self.create_training_sessions(user_id, song_id_int, self.training_sessions[user_id][add_index])
 					del_orig_session = self.create_training_sessions_without_split_on_test_song(user_id, song_id_int, self.training_sessions[user_id][add_index])
 					if (del_orig_session==True):
 						self.del_session(user_id, add_index)
@@ -221,7 +221,7 @@ class TrainTestSetGen:
 				else:
 					idx = start_index
 					for split_session in self.training_sessions[user_id][start_index:]:
-						#del_orig_session = self.create_training_sessions(user_id, song_id_int, split_session)
+						# del_orig_session = self.create_training_sessions(user_id, song_id_int, split_session)
 						del_orig_session = self.create_training_sessions_without_split_on_test_song(user_id, song_id_int, split_session)
 						if (del_orig_session==True):
 							self.del_session(user_id, idx)
@@ -256,19 +256,3 @@ class TrainTestSetGen:
 		self.gen_user_train_test_sets(user_db, song_db, user_id)
 		#self.validate_training_sessions()
 		self.print_session_stats(self.training_session_stats)
-
-		
-
-
-			
-
-
-
-
-				
-
-
-
-
-
-
