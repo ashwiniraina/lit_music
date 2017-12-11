@@ -15,6 +15,8 @@ class PlaySessions:
 	def append_session(self, session):
 		self.sessions.append(session)
 		self.total_sessions_songs += len(session)
+		for ts, song_object in session:
+			song_object.set_song_id_int()
 
 	def num_sessions(self):
 		return len(self.sessions)

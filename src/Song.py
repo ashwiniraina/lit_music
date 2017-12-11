@@ -22,10 +22,6 @@ class Song:
 		self.song_name = song_name
 		self.users = {} # map of user_id to play count
 		self.num_times_song_played = 0
-		temp_id = len(Song.song_id_to_int_id_map)
-		if song_id not in Song.song_id_to_int_id_map:
-			Song.song_id_to_int_id_map[song_id] = temp_id
-		self.song_id_int = temp_id
 
 	def set_song_stats(self, user):
 		user_id = user.user_id
@@ -39,6 +35,11 @@ class Song:
 
 	def get_song_id_int(self):
 		return self.song_id_int
+
+	def set_song_id_int(self):
+		temp_id = len(Song.song_id_to_int_id_map)
+		if song_id not in Song.song_id_to_int_id_map:
+			Song.song_id_to_int_id_map[song_id] = temp_id
 
 	def get_num_unique_users(self):
 		return (len(self.users))
