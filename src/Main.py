@@ -26,9 +26,12 @@ dataset_reader = DatasetReader()
 # m = dataset_reader.get_transition_probabilities(user_db, song_db, "user_000002")
 # save_npz('../datasets/lastfm-dataset-1K/extracts/transition_probs_user_000002', m)
 
+# train_sessions = dataset_reader.get_user_train_sessions('user_000002')
+# dataset_reader.save_hop_distances(user_db, ['user_000002'])
 
+# get training sessions for users
 
-dataset_reader.save_hop_distances()
+# dataset_reader.save_hop_distances() -- uncomment
 
 # for each user
   # generate combined song vectors -- combined_song_vectors_userid
@@ -85,5 +88,6 @@ dataset_reader.save_hop_distances()
 # userNN.train_dnn('user_000002')
 
 # EVALUATION
+
 evaluator = Evaluator()
 evaluator.run()

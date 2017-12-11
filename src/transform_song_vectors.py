@@ -1,5 +1,5 @@
 # compare with the un-transformed vectors as well.
-from metric_learn import MMC, MMC_Supervised
+from metric_learn import MMC, LSML, ITML
 from scipy.sparse import load_npz
 import numpy as np
 from Constants import Constants
@@ -8,7 +8,7 @@ def get_song_pairs(idxs, song_pairs):
     mat = song_pairs[idxs]
     return (mat[:,0], mat[:,1])
 
-def transform_song_vectors(user_id):
+def transform_song_vectors(user_id, method):
     # read user similarity matrix
     user_sim = np.load('../datasets/lastfm-dataset-1K/extracts/avg_hop_dist_' +
                        str(user_id) + ".npy").item()
@@ -49,9 +49,20 @@ def transform_song_vectors(user_id):
     arg_sorted_ids = np.argsort(song_ids)
     song_features = song_features[arg_sorted_ids,1:] # sort songs by song id, and remove id column
     song_features = song_features[user_song_ids,:]
-    mmc = MMC(max_iter=10000)
+    if method == 'MMC':
+        model = MMC(max_iter=10000, verbose=True, convergence_threshold=1e-7)
+    elif method == 'LSML' or method == 'ITML':
+        if method == 'LSML':
+            model = LSML(verbose=True)
+        elif method == 'ITML':
+            model = ITML(verbose=True)
+        min_len = min(len(a), len(c))
+        print(min_len)
+        a,b,c,d = a[:min_len], b[:min_len], c[:min_len], d[:min_len]
+        print(np.array(a[:10]))
+
     constraints = (np.array(a),np.array(b),np.array(c),np.array(d))
-    transformed_songs = mmc.fit_transform(song_features, constraints)
+    transformed_songs = model.fit_transform(song_features, constraints)
     # np.save('song_features', song_features)
     np.save('../datasets/lastfm-dataset-1K/extracts/transformed_songs_vectors_' +
             str(user_id), transformed_songs)
@@ -59,4 +70,4 @@ def transform_song_vectors(user_id):
     np.save('../datasets/lastfm-dataset-1K/extracts/song_mapping_'+str(user_id), mapping_list)
 
 if __name__ == "__main__":
-    transform_song_vectors('user_000002')
+    transform_song_vectors('user_000002', 'MMC')
