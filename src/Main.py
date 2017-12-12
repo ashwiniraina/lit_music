@@ -10,6 +10,7 @@ from Evaluator import Evaluator
 from transform_song_vectors import transform_song_vectors
 from get_user_item_rating import generate_train_test_set_for_librec
 from get_ratings import get_accuracy
+import datetime
 
 # from UserNN import UserNN
 import matplotlib.pyplot as plt
@@ -24,38 +25,46 @@ dataset_reader = DatasetReader()
 # print ("User db len=",len(user_db), " Song db len=", len(song_db))
 
 # load the pre-processed map files
-(user_db, song_db) = dataset_reader.read(constants.MAPS_LASTFM_1K);
-print ("User db len=",len(user_db), " Song db len=",len(song_db))
+# (user_db, song_db) = dataset_reader.read(constants.MAPS_LASTFM_1K);
+# print ("User db len=",len(user_db), " Song db len=",len(song_db))
 
 # for user_id, user_obj in user_db.items():
-# 	print ("User id : ",user_id, " num songs : ", user_obj.get_num_unique_songs())
+#	print ("User id : ",user_id, " num songs : ", user_obj.get_num_unique_songs())
 
 
 
 # dataset_reader.get_ratings_matrix(user_db, song_db)
 # total_precision, total_precision_wrmf = 0,0
 user_ids = user_id_list
+secs = []
 for user_id in user_ids:
-	train_test_set_gen = TrainTestSetGen()
-	train_test_set_gen.split_data_into_train_test_sets(user_db, song_db, user_id)
+	# start_time = datetime.datetime.now()
+	# train_test_set_gen = TrainTestSetGen()
+	# train_test_set_gen.split_data_into_train_test_sets(user_db, song_db, user_id)
 
-	dataset_reader.save_hop_distances(user_db, [user_id])
+	# dataset_reader.save_hop_distances(user_db, [user_id])
 
 
 	# # m = dataset_reader.get_transition_probabilities(user_db, song_db, user_id)
 	# # save_npz('../datasets/lastfm-dataset-1K/extracts/transition_probs_'+user_id, m)
 
 	# # # run the SongToVec model on combined song sequences for all users
-	song_to_vec_comb = SongToVec()
-	song_to_vec_comb.run(user_db, song_db, user_id, constants.RUN_SONG2VEC_ON_ALL_SONGS)
+	# song_to_vec_comb = SongToVec()
+	# song_to_vec_comb.run(user_db, song_db, user_id, constants.RUN_SONG2VEC_ON_ALL_SONGS)
 
-	transform_song_vectors(user_id, 'MMC')
+	transform_song_vectors(user_id, 'ITML')
+	# secs.append((datetime.datetime.now() - start_time).total_seconds())
+
+	# generate_train_test_set_for_librec(user_id)
 
 
-	generate_train_test_set_for_librec(user_id)
-
-
-precision, precision_wrmf = get_accuracy(user_ids, use_transformed_songs=False, use_wrmf=False)
+precision, precision_wrmf, l1, l2 = get_accuracy(user_ids,
+                                                 use_transformed_songs=True,
+                                                 use_wrmf=False)
+print(precision)
+print(l1)
+print(precision_wrmf)
+print(secs)
 
 # for each user
 #  get_actual_predicted_songs(user_id):
@@ -67,15 +76,15 @@ precision, precision_wrmf = get_accuracy(user_ids, use_transformed_songs=False, 
 # p = defaultdict(int)
 # for session in sessions:
 #     for e1,e2 in zip(session[:-1], session[1:]):
-#         s1,s2 = e1[1], e2[1]
-#         s1, s2 = s1.song_id_int, s2.song_id_int
-#         p[s1, s2] += 1/user.songs[s1]
-#         data,rows,cols = [],[],[]
+#	  s1,s2 = e1[1], e2[1]
+#	  s1, s2 = s1.song_id_int, s2.song_id_int
+#	  p[s1, s2] += 1/user.songs[s1]
+#	  data,rows,cols = [],[],[]
 
-#         for ((s1,s2),prob) in p.items():
-#             data.append(prob)
-#             rows.append(s1)
-#             cols.append(s2)
+#	  for ((s1,s2),prob) in p.items():
+#	      data.append(prob)
+#	      rows.append(s1)
+#	      cols.append(s2)
 
 # mat = coo_matrix((data, (rows,cols)))
 

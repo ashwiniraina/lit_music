@@ -119,13 +119,18 @@ def get_accuracy(user_ids, use_transformed_songs=False, use_wrmf=False):
                     for user_id in user_ids]
     precision = 0
     precision_wrmf = 0
+    precisions, precisions_wrmf = [],[]
     for user_id in user_ids:
         actual, predicted = get_actual_predicted_songs(user_id, use_transformed_songs,
                                                        save_lists=False)
         if use_wrmf:
             wrmf_predicted = get_wrmf_predictions(user_id)
-            precision_wrmf += len(set(actual) & set(wrmf_predicted))/(actual.shape[0])
-        precision += len(set(actual) & set(predicted))/(actual.shape[0])
+            tmp = len(set(actual) & set(wrmf_predicted))/(actual.shape[0])
+            precision_wrmf += tmp
+            precisions_wrmf.append(tmp)
+        tmp = len(set(actual) & set(predicted))/(actual.shape[0])
+        precision += tmp
+        precisions.append(tmp)
         # print('----actual----')
         # print(actual)
         # print('----predicted----')
@@ -137,7 +142,7 @@ def get_accuracy(user_ids, use_transformed_songs=False, use_wrmf=False):
     if use_wrmf:
         precision_wrmf /= len(user_ids)
         print(precision_wrmf)
-    return (precision, precision_wrmf)
+    return (precision, precision_wrmf, precisions, precisions_wrmf)
 
 
 if __name__ == '__main__':
